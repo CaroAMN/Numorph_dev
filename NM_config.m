@@ -36,7 +36,7 @@ conda_path = 'default';
 
 % Make sure path is set
 home_path = fileparts(which('NM_config'));
-addpath(genpath(home_path))
+%addpath(genpath(home_path))
 cd(home_path)
 
 % Save template variables
@@ -120,7 +120,7 @@ elseif nargin > 1 && isequal(main_stage,'evaluate')
     end
     
     output_directory = results_directory;
-    use_processed_images = "false";
+    use_processed_images = "stitched";
     clear sample;
     save(tmp_path,'prefix','samples','s_fields','results_path','groups','results_directory','-mat','-append')
 else

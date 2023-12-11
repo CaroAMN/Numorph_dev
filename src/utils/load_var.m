@@ -31,6 +31,14 @@ var_path = fullfile(config.output_directory,'variables',strcat(variable,'.mat'))
 
 if isfile(var_path)
     out = load(var_path,var_name);
+    if length(fieldnames(out)) == 0
+        if nargin>2 
+            varargout{1} = [];
+            return
+        else
+            out = load(var_path);
+        end
+    end
     f = fields(out);
     varargout = cell(1,length(f));
     for i = 1:length(f)

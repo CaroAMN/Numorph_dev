@@ -1,8 +1,9 @@
-function df_results = combine_counts(config,count_results)
+function df_results = combine_counts(config, count_results)
 %--------------------------------------------------------------------------
 % Measure cell count results and append to full multi-sample dataset for
 % all annotated structures
 %--------------------------------------------------------------------------
+
 if isequal(config.use_classes,"true") && all(config.s_fields(:,3))
     classes = config.keep_classes;
     if isempty(classes)
@@ -18,8 +19,11 @@ else
 end
 
 % Read template or check for previous results to append to
-df_temp = readtable(config.temp_file);
+df_temp = readtable(config.template_file);
 df_temp = df_temp(df_temp.index>0,:);
+
+disp(types_ind)
+disp(config.custom_class)
 
 if using_classes && isequal(config.sum_all_classes,"true")
     types_all = ["all",types_ind,config.custom_class];
@@ -31,10 +35,17 @@ end
 df_results = cell(1,length(config.results_path));
 for n = 1:length(config.results_path)
     % Choose sample
-    fprintf(strcat(char(datetime('now')),"\t Reading sample %s...\n"),config.samples(n));
+    fprintf("%s\t Reading sample %s...\n",datetime('now'),config.samples(n))
     sum_path = config.results_path(n);
     obj = matfile(sum_path);
     var_names = who(obj);
+
+    % Check for count results
+    if ~any(ismember(var_names,'centroids'))
+        fprintf("%s\t No centroid information found for sample %s. Skipping...\n",...
+            datetime('now'),config.samples(n))
+        continue
+    end
     
     % Read annotations
     if any(ismember(var_names,'annotations'))
@@ -118,6 +129,9 @@ end
 
 % Concatenate counts to results table
 df_results = cat(2,df_results{:});
+if isempty(df_results)
+    return
+end
 idx = repmat(types_all,1,length(config.results_path));
 [~,idx] = sort(idx);
 df_results = df_results(:,idx);

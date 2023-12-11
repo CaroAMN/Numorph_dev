@@ -84,10 +84,10 @@ function varargout=elastix(movingImage,fixedImage,outputDir,paramFile,varargin)
 [~,elastix_version] = system('elastix --version');
 r=regexp(elastix_version,'version','once');
 % Modified
-if isempty(r)
-    fprintf('Unable to find elastix binary in system path. Quitting\n')
-    return
-end
+%if isempty(r)
+ %   fprintf('Unable to find elastix binary in system path. Quitting\n')
+  %  return
+%end
 
 %%%%% New: change outputDir to char if string
 if isstring(outputDir)

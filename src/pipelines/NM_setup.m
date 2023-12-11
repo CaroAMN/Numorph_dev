@@ -1,5 +1,7 @@
-function NM_setup
+function NM_setup(option)
 % Download and verify MATLAB add-ons and external packages used in NuMorph
+if nargin < 1; option = 'notlight'; end
+if isequal(option, 'light'); islight = true; else; islight = false; end
 
 o = weboptions('CertificateFilename','');
 home_path = fileparts(which('NM_config'));
@@ -61,6 +63,52 @@ if ~isfile(atlas_path1) && ~isfile(atlas_path2)
 else
     fprintf("All atlases exist \n\n")
 end
+
+% Check for annotations
+flatview_path = fullfile(home_path, 'data', 'annotation_data', 'flatviewCortex.mat');
+olf_cer_path = fullfile(home_path, 'data', 'annotation_data', 'olf_cer.mat');
+ccfv3_path = fullfile(home_path, 'data', 'annotation_data', 'ccfv3.mat');
+if ~isfile(flatview_path) && ~isfile(olf_cer_path) && ~isfile(ccfv3_path)
+   fprintf("Downloading annotation data...\n")
+    if ~isfile(ccfv3_path)
+       websave(ccfv3_path,"https://bitbucket.org/steinlabunc/numorph/downloads/ccfv3.mat",o);
+    end
+    if ~isfile(olf_cer_path)
+       websave(olf_cer_path,"https://bitbucket.org/steinlabunc/numorph/downloads/olf_cer.mat",o);
+    end
+    if ~isfile(flatview_path)
+       websave(flatview_path,"https://bitbucket.org/steinlabunc/numorph/downloads/flatviewCortex.mat",o);
+    end
+else
+    fprintf("All annotation data exist \n\n")
+end
+
+% Move templates 
+template_path = fullfile(home_path,'templates');
+if ~isfolder(template_path)
+    mkdir(template_path)
+    reload_default_template('process',true)
+    reload_default_template('analyze',true)
+    reload_default_template('evaluate',true)
+    reload_default_template('samples',true)
+else
+    if ~isfile(fullfile(template_path, 'NMp_template.m'))
+        reload_default_template('process',true)
+    end
+    if ~isfile(fullfile(template_path, 'NMa_template.m'))
+        reload_default_template('analyze',true)
+    end
+    if ~isfile(fullfile(template_path, 'NMe_template.m'))
+        reload_default_template('evaluate',true)
+    end
+    if ~isfile(fullfile(template_path, 'NM_samples.m'))
+        reload_default_template('samples',true)
+    end
+end
+addpath(template_path)
+
+% Return if only light installation
+if islight; return; end
 
 % Check for elastix
 fprintf("Checking for elastix \n")
@@ -127,82 +175,58 @@ end
 
 % Setup enviornment for 3d-unet
 % Check if conda is installed
-PATH = getenv('PATH');
-c_idx = 1;
-if ~contains(PATH,'conda/bin') && ~contains(PATH,'conda3/bin')
-    conda_path = add_conda_to_path;
-    if isempty(conda_path)
-        warning("Did not detect conda installation. Download and install "+...
-            "miniconda for python version 3. If you're sure that conda is installed and is callable "+...
-            "from shell, update conda binary location in NM_config")
-        pause(5)
-        c_idx = 0;
-    end
-end
-
+%PATH = getenv('PATH');
+%c_idx = 1;
+%if ~contains(PATH,'conda/bin') && ~contains(PATH,'conda3/bin')
+%    conda_path = add_conda_to_path;
+%    if isempty(conda_path)
+%        warning("Did not detect conda installation. Download and install "+...
+%            "miniconda for python version 3. If you're sure that conda is installed and is callable "+...
+%            "from shell, update conda binary location in NM_config")
+%        pause(5)
+%        c_idx = 0;
+%    end
+%end
+%
 % Check if 3dunet-centroid environment is installed
-if c_idx ~= 0 
-    fprintf("Checking for 3D-Unet conda environment \n")
-    [~,envs] = system('conda env list');
-    if ~contains(envs,'3dunet-centroid')
-        fprintf("Creating conda environment to run centroid prediction using 3D-Unet \n")
-        if ismac
-            env_path = fullfile(home_path,'src','analysis','3dunet','environment_mac.yml');
-        elseif isunix
-            env_path = fullfile(home_path,'src','analysis','3dunet','environment_unix.yml');
-        elseif ispc
-            env_path = fullfile(home_path,'src','analysis','3dunet','environment_pc.yml');
-        end
-        CMD = sprintf("conda env create -f %s",env_path);
-        status = system(CMD);
-        if status == 0 
-            fprintf("Conda environemnt successfully installed \n")
-        else
-            warning("Errors occured during conda installation \n")
-            pause(5)
-        end 
-    else
-        fprintf("Conda environment already installed \n")
-    end
-end
+%if c_idx ~= 0 
+%    fprintf("Checking for 3D-Unet conda environment \n")
+%    [~,envs] = system('conda env list');
+%    if ~contains(envs,'3dunet-centroid')
+%        fprintf("Creating conda environment to run centroid prediction using 3D-Unet \n")
+%        if ismac
+%            env_path = fullfile(home_path,'src','analysis','3dunet','environment_mac.yml');
+%        elseif isunix
+%            env_path = fullfile(home_path,'src','analysis','3dunet','environment_unix.yml');
+%        elseif ispc
+%            env_path = fullfile(home_path,'src','analysis','3dunet','environment_pc.yml');
+%        end
+%        CMD = sprintf("conda env create -f %s",env_path);
+%        status = system(CMD);
+%        if status == 0 
+%            fprintf("Conda environemnt successfully installed \n")
+%        else
+%            warning("Errors occured during conda installation \n")
+%            pause(5)
+%        end 
+%    else
+%        fprintf("Conda environment already installed \n")
+%    end
+%end
 
 % Check if unet model exists
-if c_idx ~= 0 
-    fprintf("Checking for 3D-Unet model files \n")
-    model_files = dir(fullfile(home_path,'src','analysis','3dunet','nuclei','models'));
-    if ~any(endsWith({model_files.name},'.h5'))
-       fprintf("Downloading 3D-Unet model 075_121_model.h5...\n")
-        out = websave(fullfile(model_files(1).folder,'075_121_model.h5'),...
-            "https://bitbucket.org/steinlabunc/numorph/downloads/075_121_model.h5",o);
-    else
-        fprintf("Model file %s already exists \n",...
-            model_files(arrayfun(@(s) endsWith(s.name,'.h5'),model_files)).name)
-    end
-end
-
-% Move templates 
-template_path = fullfile(home_path,'templates');
-if ~isfolder(template_path)
-    mkdir(template_path)
-    reload_default_template('process',true)
-    reload_default_template('analyze',true)
-    reload_default_template('evaluate',true)
-    reload_default_template('samples',true)
-else
-    if ~isfile(fullfile(template_path, 'NMp_template.m'))
-        reload_default_template('process',true)
-    end
-    if ~isfile(fullfile(template_path, 'NMa_template.m'))
-        reload_default_template('analyze',true)
-    end
-    if ~isfile(fullfile(template_path, 'NMe_template.m'))
-        reload_default_template('evaluate',true)
-    end
-    if ~isfile(fullfile(template_path, 'NM_samples.m'))
-        reload_default_template('samples',true)
-    end
-end
-addpath(template_path)
+%if c_idx ~= 0 
+%    fprintf("Checking for 3D-Unet model files \n")
+%    model_files = dir(fullfile(home_path,'src','analysis','3dunet','nuclei','models'));
+%    if ~any(endsWith({model_files.name},'.h5'))
+%       fprintf("Downloading 3D-Unet model 075_121_model.h5...\n")
+%        out = websave(fullfile(model_files(1).folder,'075_121_model.h5'),...
+%            "https://bitbucket.org/steinlabunc/numorph/downloads/075_121_model.h5",o);
+%    else
+%        fprintf("Model file %s already exists \n",...
+%            model_files(arrayfun(@(s) endsWith(s.name,'.h5'),model_files)).name)
+%    end
+%end
 
 fprintf("Setup completed! \n")
 

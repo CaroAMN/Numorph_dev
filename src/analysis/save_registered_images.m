@@ -69,16 +69,16 @@ for i = 1:nmov
         img = apply_prealignment(img,params.pre_mov_tforms{i-1}, mov,...
             params.mov_res, params.mov_orientation, config.hemisphere);
     else
-        img = convert_nii_16(img, mov, hemisphere, true);
+        %img = convert_nii_16(img, mov, hemisphere, true);
     end
     
     % Apply transformation
-    img = standardize_nii(img, params.mov_res, params.mov_orientation,...
-        config.hemisphere, false);
+    img = standardize_nii(img, params.mov_res, params.mov_orientation, config.hemisphere, false, ...
+        25, params.ref_orientation, config.hemisphere);
     img = transformix(double(img), params, [1,1,1], []);
 
     % Permute and resize to match reference
-    img = permute_orientation(img,'ail',char(params.ref_orientation));
+    %img = permute_orientation(img,'ail',char(params.ref_orientation));
     img = imresize3(img,[nrows,ncols,nslices]);
     
     niftiwrite(uint16(img),fname)
@@ -136,7 +136,7 @@ function img = apply_prealignment(img, tforms, resolution, orientation, hemisphe
 [nrows, ncols, nslices] = size(img);
 
 img = standardize_nii(img, resolution, orientation, hemisphere, false);
-img = doulbe(img);
+img = double(img);
 
 % Apply transformation
 img = transformix(img, tforms, [1,1,1], []);

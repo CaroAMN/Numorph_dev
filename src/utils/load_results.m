@@ -1,4 +1,4 @@
-function results = load_results(input,variable,sample)
+function results = load_results(input, variable, sample, contains_field)
 %--------------------------------------------------------------------------
 % Load results summary for a given sample. 
 %--------------------------------------------------------------------------
@@ -16,19 +16,29 @@ function results = load_results(input,variable,sample)
 % sample: Optional string specifying sample if NM_evaluate structure
 % provided.
 %
+% contains_field: Optional logical. Just check if the field exists without
+% loading data.
+%
 %--------------------------------------------------------------------------
 % Outputs:
 % results: Results structure.
 %
 %--------------------------------------------------------------------------
-if nargin<2 
+if nargin<2
     variable = [];
 end
 
-if nargin>2 && isstruct(input)
-    input.output_directory = input.results_path(input.samples == string(sample));
+if nargin<4
+    contains_field = false;
 end
 
+if isstruct(input) && isfield(input, 'results_path') 
+    if nargin > 2
+        input.output_directory = input.results_path(input.samples == string(sample));  
+    else
+        input.output_directory = input.results_path(1);
+    end
+end
 home_path = fileparts(which('NM_config'));
 
 if isstruct(input)
@@ -62,20 +72,39 @@ end
 % Load structure
 if endsWith(var_path,'.mat')
     results = load(var_path);
+    if contains_field
+        results = isfield(results, variable);
+        return
+    end
+    if ~isempty(variable)
+        results = load_sub_variable(results, variable);
+    end
 else
     files = dir(fullfile(var_path,"*_results.mat"));
     if length(files) == 1
-        if isempty(variable)
-            results = load(fullfile(files.folder,files.name));
-        else
-            results = load(fullfile(files.folder,files.name),variable);
-            results = results.(variable);
+        results = load(fullfile(files.folder,files.name));
+        if contains_field
+            results = isfield(results, variable);
+            return
+        end
+        if ~isempty(variable)
+            results = load_sub_variable(results, variable);
         end
     elseif length(files) > 1
         error("More than one results structure detected in the output directory")
     else
         error("Did not detect results structure in the output directory")
     end
+end
+
+end
+
+
+function results = load_sub_variable(results, variable)
+
+v = strsplit(variable,'.');
+for i = 1:length(v)
+    results = results.(v{i});
 end
 
 end

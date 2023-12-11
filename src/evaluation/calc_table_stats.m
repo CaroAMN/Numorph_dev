@@ -16,7 +16,7 @@ config.groups = config.groups(par_idx);
 group_delimiters = cat(2,config.samples,cat(1,config.groups{:}));
 
 % Create new table with annotations of interest
-df_temp = readtable(config.temp_file);
+df_temp = readtable(config.template_file);
 df_temp = df_temp(df_temp.index>0,:);
 s_idx = df_temp.index;
 

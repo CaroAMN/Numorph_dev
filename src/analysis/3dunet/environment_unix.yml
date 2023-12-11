@@ -70,7 +70,7 @@ dependencies:
     - joblib==0.16.0
     - keras==2.1.6
     - keras-applications==1.0.8
-    - git+git://www.github.com/keras-team/keras-contrib.git
+    - git+https://www.github.com/keras-team/keras-contrib.git
     - keras-preprocessing==1.1.2
     - markdown==3.2.2
     - mat73==0.46

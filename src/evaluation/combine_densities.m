@@ -1,12 +1,20 @@
-function df_results = combine_densities(config,count_results,vol_results,dense_results)
+function combine_densities(config,count_results,vol_results,dense_results)
 %--------------------------------------------------------------------------
 % Calculate cell densities for annotated structures based on cell count and
 % structure volume results. 
 %--------------------------------------------------------------------------
 
 % Load counts and volumes
-counts = readtable(count_results,'PreserveVariableNames',true);
-volumes = readtable(vol_results,'PreserveVariableNames',true);
+if isfile(count_results)
+    counts = readtable(count_results,'PreserveVariableNames',true);
+else
+    return
+end
+if isfile(vol_results)
+    volumes = readtable(vol_results,'PreserveVariableNames',true);
+else
+    return
+end
 count_names = string(counts.Properties.VariableNames);
 
 % Calculate densities
