@@ -40,18 +40,28 @@ home_path = fileparts(which('NM_config'));
 cd(home_path)
 
 % Save template variables
-if isequal(stage, 'evaluate')
-    [main_stage, results_directory] = save_vars(stage);
-else
-    main_stage = save_vars(stage);
-end
+% DELETE THIS
+%if isequal(stage, 'evaluate')
+%    [main_stage, results_directory] = save_vars(stage);
+%else
+%    main_stage = save_vars(stage);
+%end
+main_stage = stage;
 tmp_path = fullfile(home_path,'data','tmp','NM_variables.mat');
 
 % Load and append sample info
+% REWRITE THIS THAT NM SAMPLES IS NOT CALLED BUT TH EPROVIDED SAMPLE SHEET IS
+
 if nargin > 1 && ~isequal(main_stage,'evaluate')
-    [img_directory, output_directory] = NM_samples(sample, true);
+    % ORIGINAL CODE
+    %[img_directory, output_directory] = NM_samples(sample, true);
     load(tmp_path,'-mat')
-    
+
+% DONT NEED THIS   --------------------------------------------------------  
+% thanks copilot
+% FILEPATH: /home/schwitalla/Documents/Numorph/numorph_dev/NM_config.m
+% BEGIN: ed8c6549bwf9
+%{
 elseif nargin > 1 && isequal(main_stage,'evaluate')
     fid = fopen(fullfile(home_path,'templates','NM_samples.m'));
     c = textscan(fid,'%s');
@@ -123,12 +133,14 @@ elseif nargin > 1 && isequal(main_stage,'evaluate')
     use_processed_images = "stitched";
     clear sample;
     save(tmp_path,'prefix','samples','s_fields','results_path','groups','results_directory','-mat','-append')
+%}
+% END: ed8c6549bwf9
 else
     error("Sample information is unspecified. Set 'sample' variable.")
 end
 
 % Check variable lengths for some variables
-check_variable_lengths(main_stage)
+check_variable_lengths(main_stage, home_path)
 
 % Update image directory if using processed or analyzed images
 if ~isequal(use_processed_images,"false")
@@ -225,7 +237,7 @@ end
 end
 
 
-function check_variable_lengths(stage)
+function check_variable_lengths(stage, path)
 % Check user input variable lengths to make sure they're the correct length
 % and match number of markers in most cases
 
@@ -236,7 +248,10 @@ switch stage
             'elastix_params','rescale_intensities','subtract_background','Gamma','smooth_img','smooth_sigma',...
             'DoG_img','DoG_minmax','DoG_factor','darkfield_intensity', 'resolution','z_initial',...
             'lowerThresh','upperThresh','signalThresh'};
-        load(fullfile('data','tmp','NM_variables.mat'),variable_names{:});
+            %load(tmp_path,'-mat')
+        %load(fullfile('data','tmp','NM_variables.mat'),variable_names{:});
+        fprintf(fullfile(path,'data','tmp','NM_variables.mat'));
+        load(fullfile(path,'data','tmp','NM_variables.mat'),variable_names{:});
         
         if exist('markers','var') ~= 1  || isempty(markers)
             error("Must provide unique marker names for channel");end

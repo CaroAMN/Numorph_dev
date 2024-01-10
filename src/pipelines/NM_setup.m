@@ -5,6 +5,7 @@ if isequal(option, 'light'); islight = true; else; islight = false; end
 
 o = weboptions('CertificateFilename','');
 home_path = fileparts(which('NM_config'));
+fprintf("NuMorph home directory: %s \n",home_path);
 
 % Create empty directories
 tmp_folder = fullfile(home_path,'data','tmp');
