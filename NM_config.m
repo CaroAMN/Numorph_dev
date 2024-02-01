@@ -57,12 +57,12 @@ if nargin > 1 && ~isequal(main_stage,'evaluate')
     %[img_directory, output_directory] = NM_samples(sample, true);
     load(tmp_path,'-mat')
 
-% DONT NEED THIS   --------------------------------------------------------  
-% thanks copilot
-% FILEPATH: /home/schwitalla/Documents/Numorph/numorph_dev/NM_config.m
-% BEGIN: ed8c6549bwf9
-%{
-elseif nargin > 1 && isequal(main_stage,'evaluate')
+    % DONT NEED THIS   --------------------------------------------------------  
+        % thanks copilot
+    % FILEPATH: /home/schwitalla/Documents/Numorph/numorph_dev/NM_config.m
+    % BEGIN: ed8c6549bwf9
+    %{
+    elseif nargin > 1 && isequal(main_stage,'evaluate')
     fid = fopen(fullfile(home_path,'templates','NM_samples.m'));
     c = textscan(fid,'%s');
     fclose(fid);
@@ -133,8 +133,8 @@ elseif nargin > 1 && isequal(main_stage,'evaluate')
     use_processed_images = "stitched";
     clear sample;
     save(tmp_path,'prefix','samples','s_fields','results_path','groups','results_directory','-mat','-append')
-%}
-% END: ed8c6549bwf9
+        %}
+    % END: ed8c6549bwf9
 else
     error("Sample information is unspecified. Set 'sample' variable.")
 end
@@ -257,11 +257,13 @@ switch stage
             error("Must provide unique marker names for channel");end
         if exist('ignore_markers','var') == 1  && ~isempty(ignore_markers)
             ig_idx = ismember(markers,ignore_markers);
+            disp(ig_idx);
             markers = markers(~ig_idx);   
             if exist('channel_num') == 1 && ~isempty(channel_num)
                 channel_num = channel_num(~ig_idx);
             end
         end
+        
         if exist('single_sheet','var') == 1 && length(single_sheet) == 1
             single_sheet = repmat(single_sheet,1,length(markers));end
         if exist('blending_method','var') == 1 && length(blending_method) == 1
