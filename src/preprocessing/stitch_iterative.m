@@ -30,7 +30,6 @@ if nargin >3
     defaults.pseudo = pseudo;
 end
 var_dir = fullfile(config.output_directory,'variables');
-
 % Create directory for stitched images
 if ~isfolder(fullfile(config.output_directory,'stitched')) &&...
         isequal(config.save_images,"true") &&...
@@ -293,12 +292,12 @@ testing = false;
 if nargout == 3
     testing = true;    
 end
-
 % Whether params are being updated
 update = false;
 if isequal(config.stitch_images,"update") && ~isempty(config.stitch_sub_stack)
     update = true;
 end
+
 
 % Read images, adjust intensities, apply translations for multichannel
 A = read_stitching_grid(img_grid,config.stitch_sub_channel,config.markers,...
@@ -570,6 +569,7 @@ for i = 1:size(B,1)-1
 end
 
 % Return if only calculating parameters
+
 if isequal(config.save_images,'false') && ~testing
     return
 end
@@ -587,7 +587,9 @@ I = cellfun(@(s) uint16(crop_to_ref(zeros(full_height+border_pad,full_width+bord
 
 % Return if only calculating parameters
 if ~testing
+
     % Save images as individual channels (will be large)
+    disp("Saving stitched images")
     for i = 1:length(c_idx)
         img_name = sprintf('%s_%s_C%d_%s_stitched.tif',...
             config.sample_id,num2str(z_idx,'%04.f'),c_idx(i),config.markers(c_idx(i)));

@@ -250,14 +250,13 @@ switch stage
             'lowerThresh','upperThresh','signalThresh'};
             %load(tmp_path,'-mat')
         %load(fullfile('data','tmp','NM_variables.mat'),variable_names{:});
-        fprintf(fullfile(path,'data','tmp','NM_variables.mat'));
+        %fprintf(fullfile(path,'data','tmp','NM_variables.mat'));
         load(fullfile(path,'data','tmp','NM_variables.mat'),variable_names{:});
         
         if exist('markers','var') ~= 1  || isempty(markers)
             error("Must provide unique marker names for channel");end
         if exist('ignore_markers','var') == 1  && ~isempty(ignore_markers)
             ig_idx = ismember(markers,ignore_markers);
-            disp(ig_idx);
             markers = markers(~ig_idx);   
             if exist('channel_num') == 1 && ~isempty(channel_num)
                 channel_num = channel_num(~ig_idx);

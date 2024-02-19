@@ -11,6 +11,8 @@ function preprocessing = numorph_preprocessing(config_file, sample, step)
     % read in the config file which is a csv file
     % convert config file to a structure like in original numorph
     csv_to_mat_file(config_file, 'data/tmp/NM_variables.mat');
+    output_dir = load('NM_variables.mat', 'output_directory');
+    
 
     switch step
         case 'process'
@@ -28,7 +30,61 @@ function preprocessing = numorph_preprocessing(config_file, sample, step)
         otherwise
             error('Invalid step. Please choose from: process, intensity, align, stitch');
     end
+
+    % Specify the directory where the .mat files are located
+    directoryPath = output_dir.output_directory;
+    
+
+    matFilePaths = getAllMatFiles(directoryPath);
+    
+
+    % Loop through each .mat file
+    for i = 1:length(matFilePaths)
+        % Construct the full path to the .mat file
+        matFilePath = matFilePaths{i};
+    
+        % Load the .mat file
+        loadedData = load(matFilePath);
+    
+        % Assuming the .mat file contains a single variable or a structure.
+        % You might need to adjust this part if your .mat files are different.
+        dataFieldNames = fieldnames(loadedData);
+        if length(dataFieldNames) == 1
+            data = loadedData.(dataFieldNames{1});
+        
+            % Check if the data is a table, if not, you might need to convert or handle differently
+            if istable(data)
+                % Construct the path for the .csv file
+                % It uses the same base filename as the .mat file
+                [filePath, fileName, ~] = fileparts(matFilePath);
+                csvFilePath = fullfile(filePath, [fileName, '.csv']);
+            
+                % Write the table to a .csv file
+                writetable(data, csvFilePath);
+                fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.csv']);
+            elseif isstruct(data)
+                % Convert structure to JSON string
+                jsonStr = jsonencode(data);
+                % Construct the path for the output JSON file
+                [filePath, fileName, ~] = fileparts(matFilePath);
+                jsonFilePath = fullfile(filePath, [fileName, '.json']);
+                
+                fid = fopen(jsonFilePath, 'w');
+                if fid == -1
+                    error('Cannot create JSON file');
+                end
+                fwrite(fid, jsonStr, 'char');
+                fclose(fid);
+                fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
+            end
+        else
+            warning('%s contains multiple variables and was not converted.',  matFilePaths{i});
+        end
+    end
+
 end
+
+
 
 function csv_to_mat_file(csvFilePath, matFilePath)
     % Read the CSV file into a table
@@ -434,4 +490,31 @@ function csv_to_mat_file(csvFilePath, matFilePath)
     end
     % Save the structure as a .mat file
     save(matFilePath, '-struct', 'S');
+end
+
+function fileList = getAllMatFiles(startPath)
+    % Generate a path string that includes all subdirectories
+    allSubDirs = genpath(startPath);
+    
+    % Split the path string into individual directory paths
+    dirList = strsplit(allSubDirs, pathsep);
+    
+    % Initialize the list of file paths
+    fileList = {};
+    
+    % Loop over all directories
+    for d = 1:length(dirList)
+        % Skip any empty directory paths (can happen due to the split)
+        if isempty(dirList{d})
+            continue;
+        end
+        
+        % Get a list of all '.mat' files in the current directory
+        matFiles = dir(fullfile(dirList{d}, '*.mat'));
+        
+        % Add their full paths to the list
+        for k = 1:length(matFiles)
+            fileList{end+1, 1} = fullfile(matFiles(k).folder, matFiles(k).name);
+        end
+    end
 end
