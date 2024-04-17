@@ -9,6 +9,7 @@ fprintf("NuMorph home directory: %s \n",home_path);
 
 % Create empty directories
 tmp_folder = fullfile(home_path,'data','tmp');
+disp(tmp_folder);
 if ~isfolder(tmp_folder)
     mkdir(tmp_folder)
 end
@@ -49,40 +50,40 @@ if ~any(ismember(names,"Parallel Computing Toolbox"))
 end
 
 % Check for reference atlases
-fprintf("Checking for reference atlases \n")
-atlas_path1 = fullfile(home_path,'data','atlas','average_template_25.nii');
-atlas_path2 = fullfile(home_path,'data','atlas','ara_nissl_25.nii');
-if ~isfile(atlas_path1) && ~isfile(atlas_path2)
-    if ~isfile(atlas_path1)
-       fprintf("Downloading average template atlas...\n")
-       websave(atlas_path1,"https://bitbucket.org/steinlabunc/numorph/downloads/average_template_25.nii",o);
-    end
-    if ~isfile(atlas_path2)
-       fprintf("Downloading ara nissl atlas...\n")
-       websave(atlas_path2,"https://bitbucket.org/steinlabunc/numorph/downloads/ara_nissl_25.nii",o);
-    end
-else
-    fprintf("All atlases exist \n\n")
-end
+%fprintf("Checking for reference atlases \n")
+%atlas_path1 = fullfile(home_path,'data','atlas','average_template_25.nii');
+%atlas_path2 = fullfile(home_path,'data','atlas','ara_nissl_25.nii');
+%if ~isfile(atlas_path1) && ~isfile(atlas_path2)
+%    if ~isfile(atlas_path1)
+%       fprintf("Downloading average template atlas...\n")
+%       websave(atlas_path1,"https://bitbucket.org/steinlabunc/numorph/downloads/average_template_25.nii",o);
+%    end
+%    if ~isfile(atlas_path2)
+%      fprintf("Downloading ara nissl atlas...\n")
+%       websave(atlas_path2,"https://bitbucket.org/steinlabunc/numorph/downloads/ara_nissl_25.nii",o);
+%    end
+%else
+%    fprintf("All atlases exist \n\n")
+%end
 
 % Check for annotations
-flatview_path = fullfile(home_path, 'data', 'annotation_data', 'flatviewCortex.mat');
-olf_cer_path = fullfile(home_path, 'data', 'annotation_data', 'olf_cer.mat');
-ccfv3_path = fullfile(home_path, 'data', 'annotation_data', 'ccfv3.mat');
-if ~isfile(flatview_path) && ~isfile(olf_cer_path) && ~isfile(ccfv3_path)
-   fprintf("Downloading annotation data...\n")
-    if ~isfile(ccfv3_path)
-       websave(ccfv3_path,"https://bitbucket.org/steinlabunc/numorph/downloads/ccfv3.mat",o);
-    end
-    if ~isfile(olf_cer_path)
-       websave(olf_cer_path,"https://bitbucket.org/steinlabunc/numorph/downloads/olf_cer.mat",o);
-    end
-    if ~isfile(flatview_path)
-       websave(flatview_path,"https://bitbucket.org/steinlabunc/numorph/downloads/flatviewCortex.mat",o);
-    end
-else
-    fprintf("All annotation data exist \n\n")
-end
+%flatview_path = fullfile(home_path, 'data', 'annotation_data', 'flatviewCortex.mat');
+%olf_cer_path = fullfile(home_path, 'data', 'annotation_data', 'olf_cer.mat');
+%ccfv3_path = fullfile(home_path, 'data', 'annotation_data', 'ccfv3.mat');
+%if ~isfile(flatview_path) && ~isfile(olf_cer_path) && ~isfile(ccfv3_path)
+%   fprintf("Downloading annotation data...\n")
+%    if ~isfile(ccfv3_path)
+%       websave(ccfv3_path,"https://bitbucket.org/steinlabunc/numorph/downloads/ccfv3.mat",o);
+%    end
+%    if ~isfile(olf_cer_path)
+%       websave(olf_cer_path,"https://bitbucket.org/steinlabunc/numorph/downloads/olf_cer.mat",o);
+%    end
+%    if ~isfile(flatview_path)
+%       websave(flatview_path,"https://bitbucket.org/steinlabunc/numorph/downloads/flatviewCortex.mat",o);
+%    end
+%else
+%    fprintf("All annotation data exist \n\n")
+%end
 
 % Move templates 
 template_path = fullfile(home_path,'templates');
@@ -169,7 +170,7 @@ if ~isfolder(vl_path)
        "https://www.vlfeat.org/download/vlfeat-0.9.21-bin.tar.gz",o);
    untar(out,vl_path)
    delete(out)
-   %addpath(genpath(external_path))
+   addpath(genpath(external_path))
 else
     fprintf("vl_feat toolbox already exists already exists in /src/external \n\n")
 end

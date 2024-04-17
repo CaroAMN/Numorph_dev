@@ -488,6 +488,19 @@ for i = save_z
             end
 
             % Translate
+            disp("j");
+            disp(j);
+            disp("t_idx");
+            disp(t_idx);
+            %disp(t_idx(j));
+            %disp(class(t_idx(j)))
+            %disp(t_idx(j)+1);
+            %disp(class(t_idx(j)+1));
+            %disp(class(path_sub));
+
+            %disp(path_sub{1,0});
+            %disp(path_sub{1,1});
+            %disp(path_sub{1,t_idx(j)});
             mov_img = imtranslate(mov_img,[path_sub{1,t_idx(j)} path_sub{1,t_idx(j)+1}]);
         end
 

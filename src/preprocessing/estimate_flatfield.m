@@ -4,7 +4,7 @@ function [S, B] = estimate_flatfield(config, path_table)
 % algorithm.
 %--------------------------------------------------------------------------
 sampling_freq = config.sampling_frequency;
-
+disp(sampling_freq);
 if ~isempty(config.shading_correction_tiles) && ~isnan(config.shading_correction_tiles)
 
     max_x = max(unique(path_table.x));
