@@ -5,13 +5,16 @@ function preprocessing = numorph_preprocessing(config_file, sample, step)
     % 'align' : runs alignment step
     % 'stitch' : runs stitching step
 
-    addpath(genpath(pwd)); % do i need this ?
+    %addpath(genpath(pwd)); % do i need this ?
     NM_setup; % setup numorph
 
     % read in the config file which is a csv file
     % convert config file to a structure like in original numorph
-    csv_to_mat_file(config_file, 'data/tmp/NM_variables.mat');
-    output_dir = load('NM_variables.mat', 'output_directory');
+    home_path = fileparts(which('NM_config'));
+    tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
+
+    csv_to_mat_file(config_file, tmp_folder);
+    output_dir = load(tmp_folder, 'output_directory');
     
 
     switch step
@@ -42,6 +45,7 @@ function preprocessing = numorph_preprocessing(config_file, sample, step)
     for i = 1:length(matFilePaths)
         % Construct the full path to the .mat file
         matFilePath = matFilePaths{i};
+        disp(matFilePath);
     
         % Load the .mat file
         loadedData = load(matFilePath);
@@ -76,9 +80,47 @@ function preprocessing = numorph_preprocessing(config_file, sample, step)
                 fwrite(fid, jsonStr, 'char');
                 fclose(fid);
                 fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
+            else
+                % Convert structure to JSON string
+                jsonStr = jsonencode(data);
+                % Construct the path for the output JSON file
+                [filePath, fileName, ~] = fileparts(matFilePath);
+                jsonFilePath = fullfile(filePath, [fileName, '.json']);
+                
+                fid = fopen(jsonFilePath, 'w');
+                if fid == -1
+                    error('Cannot create JSON file');
+                end
+                fwrite(fid, jsonStr, 'char');
+                fclose(fid);
+                fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
             end
+        % Assuming the the .mat file contains a structure with multiple fields    
+        elseif length(dataFieldNames) >= 1
+            % Loop through each field if you have multiple fields in your structure
+            allData = struct();
+            for idx = 1:length(dataFieldNames)
+                fieldName = dataFieldNames{idx};
+                allData.(fieldName) = loadedData.(fieldName);
+            end
+            % Convert the structure to a JSON string
+            jsonData = jsonencode(allData);
+            
+            % Define the JSON file path
+            [filePath, fileName, ~] = fileparts(matFilePath);
+            jsonFilePath = fullfile(filePath, [fileName, '.json']);
+            %jsonFilePath = 'converted_data.json';
+            
+            % Write the JSON string to a file
+            fileId = fopen(jsonFilePath, 'w');
+            if fileId == -1
+                error('Failed to create JSON file: %s', jsonFilePath);
+            end
+            fwrite(fileId, jsonData, 'char');
+            fclose(fileId);
+            disp(['Data converted and saved to JSON: ', jsonFilePath]);
         else
-            warning('%s contains multiple variables and was not converted.',  matFilePaths{i});
+            warning('%s contains no variables and was not converted.', matFilePaths{i});
         end
     end
 
