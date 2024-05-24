@@ -1,9 +1,29 @@
-function preprocessing = numorph_preprocessing(config_file, sample, step)
+function preprocessing = numorph_preprocessing(varargin)
+    %Required: --input_dir', @ischar);
+    %Required: --output_dir', @ischar);
+    %Required: --parameter_file', @ischar);
+    %Required: --sample_name', @ischar);
+    %Required: --stage', @ischar);
+
+
+
     % step: possible steps to run for preprocessing 
     % 'process' : runs complete preprocessing pipeline
     % 'intensity' : runs intensity adjustment step
     % 'align' : runs alignment step
     % 'stitch' : runs stitching step
+
+    %call the parser function to parse the input arguments
+    params = parseInputArgs(varargin{:});
+
+    % Get the values of the parameters
+    input_dir = params.input_dir;
+    output_dir = params.output_dir;
+    parameter_file = params.parameter_file;
+    sample_name = params.sample_name;
+    stage = params.stage;
+
+    % Run the preprocessing pipeline
 
     %addpath(genpath(pwd)); % do i need this ?
     NM_setup; % setup numorph
@@ -13,32 +33,34 @@ function preprocessing = numorph_preprocessing(config_file, sample, step)
     home_path = fileparts(which('NM_config'));
     tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
 
-    csv_to_mat_file(config_file, tmp_folder);
-    output_dir = load(tmp_folder, 'output_directory');
+    csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
+
+    % old output directory path from the prevoius version of the wrapper 
+    %output_dir = load(tmp_folder, 'output_directory');
     
 
-    switch step
+    switch stage
         case 'process'
-            config = NM_config('process', sample);
+            config = NM_config('process', sample_name);
             NM_process(config, "process");
         case 'intensity'
-            config = NM_config('process', sample);
+            config = NM_config('process', sample_name);
             NM_process(config, "intensity");
         case 'align'
-            config = NM_config('process', sample);
+            config = NM_config('process', sample_name);
             NM_process(config, "align");
         case 'stitch'
-            config = NM_config('process', sample);
+            config = NM_config('process', sample_name);
             NM_process(config, "stitch");
         otherwise
             error('Invalid step. Please choose from: process, intensity, align, stitch');
     end
 
-    % Specify the directory where the .mat files are located
-    directoryPath = output_dir.output_directory;
+    % Specify the directory where the .mat files are located/ old 
+    %directoryPath = output_dir.output_directory; / old
     
 
-    matFilePaths = getAllMatFiles(directoryPath);
+    matFilePaths = getAllMatFiles(output_dir);
     
 
     % Loop through each .mat file
@@ -128,12 +150,14 @@ end
 
 
 
-function csv_to_mat_file(csvFilePath, matFilePath)
+function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
     % Read the CSV file into a table
     tbl = readtable(csvFilePath, 'ReadVariableNames', true, 'Delimiter', ',');
 
     % Create a structure to hold the variables
     S = struct();
+    S.img_directory = string(input_dir);
+    S.output_directory = string(output_dir);
 
     % Iterate over the rows of the table and add to the structure
     for i = 1:height(tbl)
@@ -273,8 +297,8 @@ function csv_to_mat_file(csvFilePath, matFilePath)
             S.ignore_markers = string(value);
         
         % Input image directory path
-        elseif (parameter == "img_directory")
-            S.img_directory = string(value);
+        %elseif (parameter == "img_directory")
+            %S.img_directory = string(value);
 
         % [-0.5,0.5]; Displacement of light-sheet along y axis. Value of 0.5 means light-sheet center is positioned at the top of the image    
         elseif (parameter == "laser_y_displacement")
@@ -335,8 +359,8 @@ function csv_to_mat_file(csvFilePath, matFilePath)
             S.orientation = string(value);
 
         % Directory to save results    
-        elseif (parameter == "output_directory")
-            S.output_directory = string(value);
+        %elseif (parameter == "output_directory")
+            %S.output_directory = string(value);
 
          % 0:1; overlap between tiles as fraction    
         elseif (parameter == "overlap")
@@ -559,4 +583,45 @@ function fileList = getAllMatFiles(startPath)
             fileList{end+1, 1} = fullfile(matFiles(k).folder, matFiles(k).name);
         end
     end
+end
+
+% function that parses commanline parameters
+function params = parseInputArgs(varargin)
+    % Create an input parser
+    p = inputParser;
+
+    % Define the required parameters
+    addParameter(p, 'input_dir', '', @ischar);
+    addParameter(p, 'output_dir', '', @ischar);
+    addParameter(p, 'parameter_file', '', @ischar);
+    addParameter(p, 'sample_name', '', @ischar);
+    addParameter(p, 'stage', '', @ischar);
+
+    % Parse the inputs
+    parse(p, varargin{:});
+
+    % Get the values of the parameters
+    params.input_dir = p.Results.input_dir;
+    params.output_dir = p.Results.output_dir;
+    params.parameter_file = p.Results.parameter_file;
+    params.sample_name = p.Results.sample_name;
+    params.stage = p.Results.stage;
+
+    % Check if required arguments exsit 
+    if isempty (params.input_dir)
+        error('Input directory is required');
+    end
+    if isempty (params.output_dir)
+        error('Output directory is required');
+    end
+    if isempty (params.parameter_file)
+        error('Parameter file is required');
+    end
+    if isempty (params.sample_name)
+        error('Sample name is required');
+    end
+    if isempty (params.stage)
+        error('Stage is required');
+    end
+
 end
