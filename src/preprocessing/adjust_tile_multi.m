@@ -39,6 +39,7 @@ img_range = round(linspace(min(path_table.z),max(path_table.z),s));
 
 % Read image size and get padding
 tempI = imread(path_table.file{1});
+disp(path_table.file{1}) %TODO: remove
 [nrows, ncols] = size(tempI);
 pad_h = round(pads*ncols*overlap);
 pad_v = round(pads*nrows*overlap);
@@ -138,6 +139,6 @@ t_adj = (adj_matrix1+adj_matrix2)/2;
 
 % Display final adjustment matrices
 fprintf('%s\t Final Tile Adjustment Matrices:\n',datetime('now'));    
-disp(t_adj)
+%disp(t_adj)
 
 end

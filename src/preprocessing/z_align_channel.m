@@ -12,6 +12,7 @@ min_signal = 0.05;       % Minimum fraction of signal pixels in reference for re
 % Unpack variables
 z_positions = config.z_positions;
 z_window = config.z_window;
+disp('z_window:');  %TODO: remove
 refThresh = config.signalThresh(1);
 signalThresh = config.signalThresh(channel_idx);
 z_initial = config.z_initial(channel_idx);
@@ -41,7 +42,11 @@ end
 
 % Read number of reference/moving images
 nb_mov = height(path_mov);    
+fprintf('nb_mov:');  %TODO: remove
+disp(nb_mov); %TODO: remove
 nb_ref = height(path_ref);
+fprintf('nb_ref:');  %TODO: remove
+disp(nb_ref); %TODO: remove
 
 % Adjust z_positions if less than 1
 if z_positions<1
@@ -61,6 +66,16 @@ path_ref = path_ref(z,:);
 
 % Initial matrix of cross correlation values and perform registration using
 % cross correlation
+
+fprintf('z:');  %TODO: remove
+disp(z); %TODO: remove
+fprintf('z len:');   %TODO: remove
+disp(length(z));        %TODO: remove
+fprintf('z_window:');       %TODO: remove
+disp(z_window);     %TODO: remove
+
+
+
 cc = zeros(length(z),z_window*2+1);
 max_signal = zeros(1,length(z));
 for i = 1:length(z)

@@ -30,6 +30,9 @@ if ischar(config) || isstring(config)
     config = NM_config('process',char(config));
 end
 config.home_path = fileparts(which('NM_config'));
+fprintf("config.homepath:") %TODO: remove
+disp(config.home_path)      % TODO: remove
+
 
 % Check config structure to make sure its correct
 if ~isfield(config,'adjust_intensity') || ~isfield(config,'align_channels')
@@ -87,6 +90,7 @@ end
 %% Read image filename information
 % Generate table containing image information
 path_table = path_to_table(config);
+disp(path_table.file(1)) %TODO: remove
 
 % Count number of x,y tiles for each channel
 nchannels = length(unique(path_table.channel_num));

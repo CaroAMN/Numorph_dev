@@ -1,9 +1,5 @@
 function preprocessing = numorph_preprocessing(varargin)
-    %Required: --input_dir', @ischar);
-    %Required: --output_dir', @ischar);
-    %Required: --parameter_file', @ischar);
-    %Required: --sample_name', @ischar);
-    %Required: --stage', @ischar);
+    
 
 
 
@@ -31,14 +27,12 @@ function preprocessing = numorph_preprocessing(varargin)
     % read in the config file which is a csv file
     % convert config file to a structure like in original numorph
     home_path = fileparts(which('NM_config'));
+    fprintf('Home path: %s\n', home_path);
     tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
-
+    fprintf('Temp folder: %s\n', tmp_folder);
     csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
 
-    % old output directory path from the prevoius version of the wrapper 
-    %output_dir = load(tmp_folder, 'output_directory');
     
-
     switch stage
         case 'process'
             config = NM_config('process', sample_name);
@@ -52,17 +46,20 @@ function preprocessing = numorph_preprocessing(varargin)
         case 'stitch'
             config = NM_config('process', sample_name);
             NM_process(config, "stitch");
+        case 'resample'
+            config = NM_config('analyze', sample_name);
+            NM_analyze(config, "resample");
+        case 'register'
+            config = NM_config('analyze', sample_name);
+            NM_analyze(config, "register");
         otherwise
-            error('Invalid step. Please choose from: process, intensity, align, stitch');
+            error('Invalid step. Please choose from: process, intensity, align, stitch, resample, register');
     end
 
-    % Specify the directory where the .mat files are located/ old 
-    %directoryPath = output_dir.output_directory; / old
     
 
     matFilePaths = getAllMatFiles(output_dir);
     
-
     % Loop through each .mat file
     for i = 1:length(matFilePaths)
         % Construct the full path to the .mat file
@@ -131,8 +128,6 @@ function preprocessing = numorph_preprocessing(varargin)
             % Define the JSON file path
             [filePath, fileName, ~] = fileparts(matFilePath);
             jsonFilePath = fullfile(filePath, [fileName, '.json']);
-            %jsonFilePath = 'converted_data.json';
-            
             % Write the JSON string to a file
             fileId = fopen(jsonFilePath, 'w');
             if fileId == -1
@@ -146,6 +141,28 @@ function preprocessing = numorph_preprocessing(varargin)
         end
     end
 
+    % convert the NM_variables.mat file to json
+    % load the NM_variables.mat file
+    varData = load(tmp_folder);
+    %save the NM_variables.mat file also as .mat file in output dir 
+    matFilePath = fullfile(output_dir, 'NM_variables.mat');
+    % convert the structure to json
+    jsonStr = jsonencode(varData);
+    % construct the path for the output JSON file
+    jsonFilePath = fullfile(output_dir, 'NM_variables.json');
+    % write the JSON string to a file
+    fid = fopen(jsonFilePath, 'w');
+    if fid == -1
+        error('Cannot create JSON file');
+    end
+    fwrite(fid, jsonStr, 'char');
+    fclose(fid);
+    fprintf('Converted %s to %s\n', tmp_folder, 'NM_variables.json');
+    % remove the NM_variables.mat file
+
+    %remove the loaded path_table variable from workspace
+    %clear varData;
+    %do this maybe later and check then if only one stage is selected or something ..
 end
 
 
@@ -297,6 +314,7 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
             S.ignore_markers = string(value);
         
         % Input image directory path
+        %TODO: check if i need this
         %elseif (parameter == "img_directory")
             %S.img_directory = string(value);
 
@@ -358,7 +376,8 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
         elseif (parameter == "orientation")
             S.orientation = string(value);
 
-        % Directory to save results    
+        % Directory to save results   
+        % TODO: check if i need this  
         %elseif (parameter == "output_directory")
             %S.output_directory = string(value);
 
@@ -550,8 +569,8 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
             S.z_positions = str2double(value);
 
         % integer; Search window for finding corresponding tiles (i.e. +/-n z positions)    
-        else (parameter == "z_window")
-            S.z_window = str2double(value)
+        elseif (parameter == "z_window")
+            S.z_window = str2double(value);
         end
     end
     % Save the structure as a .mat file

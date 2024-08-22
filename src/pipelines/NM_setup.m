@@ -9,7 +9,7 @@ fprintf("NuMorph home directory: %s \n",home_path);
 
 % Create empty directories
 tmp_folder = fullfile(home_path,'data','tmp');
-disp(tmp_folder);
+disp(tmp_folder);               % TODO: remove later 
 if ~isfolder(tmp_folder)
     mkdir(tmp_folder)
 end
@@ -107,7 +107,7 @@ else
         reload_default_template('samples',true)
     end
 end
-addpath(template_path)
+%addpath(template_path)
 
 % Return if only light installation
 if islight; return; end
@@ -170,7 +170,7 @@ if ~isfolder(vl_path)
        "https://www.vlfeat.org/download/vlfeat-0.9.21-bin.tar.gz",o);
    untar(out,vl_path)
    delete(out)
-   addpath(genpath(external_path))
+   %addpath(genpath(external_path))
 else
     fprintf("vl_feat toolbox already exists already exists in /src/external \n\n")
 end

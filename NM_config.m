@@ -19,10 +19,10 @@ function [config, path_table] = NM_config(stage, sample, run)
 %
 %--------------------------------------------------------------------------
 
-if nargin<1
-    addpath(genpath(pwd))
-    return
-end
+%if nargin<1
+%    addpath(genpath(pwd))
+%    return
+%end
 
 if nargin<3
     run = false;
@@ -48,6 +48,8 @@ cd(home_path)
 %end
 main_stage = stage;
 tmp_path = fullfile(home_path,'data','tmp','NM_variables.mat');
+disp("NM_config 51: " + tmp_path) %TODO: delete later
+
 
 % Load and append sample info
 % REWRITE THIS THAT NM SAMPLES IS NOT CALLED BUT TH EPROVIDED SAMPLE SHEET IS
@@ -200,6 +202,7 @@ if run
     var_directory = fullfile(output_directory,'variables');
     if exist(var_directory,'dir') ~= 7
         mkdir(var_directory);
+        fprintf("Created variables directory %s\n",var_directory)   %TODO: delete later
     end
     
     % Copy variables to output destination
@@ -232,6 +235,9 @@ end
 
 if nargout == 2
     path_table = path_to_table(config);
+    fprintf("Generated path table\n in NM_config.m") %TODO: delete later
+    disp
+
 end
 
 end

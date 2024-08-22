@@ -78,6 +78,8 @@ if isstruct(config) && isfield(config,'base_directory') &&...
 elseif isstruct(config) && isfile(fullfile(config.output_directory,'variables','path_table.mat'))
     var_location = fullfile(config.output_directory,'variables','path_table.mat');  
     load(var_location,'path_table')
+    fprintf("dir path_table:")
+    disp(path_table) %TODO remove later
     if ~isequal(location,"raw") && ~isfield(path_table,location) 
         quick_load = false;
         save_table = true;
@@ -99,6 +101,7 @@ switch location
         end
         if isempty(path_table) || ~quick_load
             [path_table_raw, path_table_nii] = munge_raw(config);
+            fprintf("created path_table_raw\n")  %TODO remove later
         else
             f = string(fieldnames(path_table));
             if ~all(ismember(markers,f))
@@ -165,9 +168,12 @@ if save_table
         path_table.(location) = path_table_series;
     end
     save(var_location,'path_table')
+    % display the location where path table is generated
+    display("saved path_table to (path_to_table)" + var_location)  %TODO remove later
 end
 
 if isequal(location,"raw")  
+    fprintf(" is equal to raw\n")  %TODO remove later
     % Merge tables
     path_table_series = path_table_raw.(markers(1));
     z1 = unique(path_table_series.z)';
