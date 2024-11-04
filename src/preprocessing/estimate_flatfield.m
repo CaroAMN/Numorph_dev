@@ -4,22 +4,26 @@ function [S, B] = estimate_flatfield(config, path_table)
 % algorithm.
 %--------------------------------------------------------------------------
 sampling_freq = config.sampling_frequency;
+disp(sampling_freq);
+if ~isempty(config.shading_correction_tiles) && ~isnan(config.shading_correction_tiles)
 
-if ~isempty(config.shading_correction_tiles)
     max_x = max(unique(path_table.x));
     max_y = max(unique(path_table.y));
-    
+
     [x,y] = ind2sub([max_x, max_y],config.shading_correction_tiles);
+    
     
     path_table = path_table(ismember(path_table.x,x),:);
     path_table = path_table(ismember(path_table.y,y),:);
 end
 
 x_tiles = unique(path_table.x);
+
 y_tiles = unique(path_table.y);
 
 n_tiles = length(x_tiles)*length(y_tiles);
 n_samples = round(sampling_freq*height(path_table)/n_tiles); 
+
 
 z_idx = floor(linspace(1,max(path_table.z),n_samples));
 path_sub = path_table(ismember(path_table.z,z_idx),:);

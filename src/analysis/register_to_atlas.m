@@ -1,4 +1,3 @@
-
 function reg_params = register_to_atlas(config, mov_img_path, ref_img_path, num_points)
 % Register images to the reference atlas using elastix via melastix
 % wrapper. Note: the final registration parameters are stored in the
@@ -19,7 +18,8 @@ direction = config.registration_direction;
 use_points = config.use_points;
 atlas_file = config.atlas_file;
 home_path = fileparts(which('NM_config.m'));
-cen_structure = config.prealign_annotation_index;
+%cen_structure = config.prealign_annotation_index;
+cen_structure = [];
 
 % Unless testing, use all points
 if nargin<4 || isempty(num_points)

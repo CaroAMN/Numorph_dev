@@ -36,26 +36,24 @@ end
 img = read_img(atlas_file);
 annotations = read_img(annotation_file);
 
+assert(all(size(img) == size(annotations)), "Atlas and annotations must be the same size and orientation");
+
 % Standardize
 img = standardize_nii(img, resolution, orientation, hemisphere, false,...
     out_resolution, 'ail', hemisphere, 'uint16');
 
-annotations = standardize_nii(annotations, resolution, orientation, ....
-    hemisphere, true, out_resolution, 'ail', hemisphere, 'uint16');
+annotations = standardize_nii(annotations, resolution, orientation, hemisphere, true,...
+    out_resolution, 'ail', hemisphere, 'uint16');
 
-[~, fname] = fileparts(annotationFile);
+[~, fname] = fileparts(annotation_file);
 annotationData.name = string(fname);
 annotationData.annotationVolume = annotations;
 annotationData.annotationIndexes = unique(annotationData.annotationVolume);
 annotationData.resolution = out_resolution;
 annotationData.hemisphere = hemisphere;
 
-if isequal(hemisphere, 'left')
+if ~isequal(hemisphere, 'none')
     annotationData.orientation = 'ail';
-elseif isequal(hemisphere, 'right')
-    annotationData.orientation = 'pir';
-elseif isequal(hemisphere, 'both')
-    annotationData.orientation = 'pls';
 else
     annotationData.orientation = 'none';
 end

@@ -6,7 +6,7 @@ function df_results = combine_volumes(config,vol_results)
 %--------------------------------------------------------------------------
 
 % Read annotation indexes
-df_temp = readtable(config.temp_file);
+df_temp = readtable(config.template_file);
 df_temp = df_temp(df_temp.index>0,:);
 annotation_indexes = df_temp.index;
 
@@ -14,6 +14,13 @@ annotation_indexes = df_temp.index;
 df_volumes = zeros(length(annotation_indexes),length(config.results_path));
 for i = 1:length(config.results_path)
     var_names = who('-file',config.results_path(i));
+
+    % Check for count results
+    if ~any(ismember(var_names,'I_mask'))
+        fprintf("%s\t No mask information found for sample %s. Skipping...\n",...
+            datetime('now'),config.samples(i))
+        continue
+    end
     load(config.results_path(i),'summary')
     if ~ismember('summary',var_names) || ~isfield(summary,'volumes')
          summary.volumes = measure_structure_volumes(config.results_path(i));

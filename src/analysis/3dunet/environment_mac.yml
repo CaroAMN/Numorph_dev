@@ -22,7 +22,7 @@ dependencies:
     - absl-py==0.11.0
     - astor==0.8.1
     - cached-property==1.5.2
-    - connected-components-3d==1.8.0
+    - connected-components-3d==1.8.0 -
     - cycler==0.10.0
     - decorator==4.4.2
     - gast==0.4.0

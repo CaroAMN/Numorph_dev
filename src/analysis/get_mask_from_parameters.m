@@ -38,10 +38,10 @@ if isequal(config.annotation_mapping,"image")
         config.annotation_file)
     assert(endsWith(config.annotation_file,'.nii'), "Annotation file must have .nii extension")
     [I_mask, meta] = read_img(config.annotation_file);
-    if ~startsWith(meta.Datatype,'uint')
-        I_mask = imrotate(I_mask,90);
-        I_mask = flip(I_mask,1);
-    end
+    %if ~startsWith(meta.Datatype,'uint')
+    %    I_mask = imrotate(I_mask,90);
+    %    I_mask = flip(I_mask,1);
+    %end
 
 elseif isequal(config.annotation_mapping,"atlas")
     fprintf('%s\t Loading annotations mapped to the atlas \n',datetime('now'))
@@ -49,7 +49,8 @@ elseif isequal(config.annotation_mapping,"atlas")
     assert(isfile(annotation_path), "Annotation file %s does not exist. See munge_atlas", annotation_path)
     av = load(annotation_path);
     I_mask = av.annotationVolume;
-    I_mask = standardize_nii(I_mask, av.resolution, av.orientation, av.hemisphere, true);
+    I_mask = standardize_nii(I_mask, av.resolution, av.orientation, av.hemisphere, true, ...
+        25, reg_params.(direction).ref_orientation, config.hemisphere);
 
 end
 
@@ -59,8 +60,9 @@ if ~isempty(config.use_structures)
         % Subset structures based on structure index
         id = config.use_structures;
     elseif endsWith(config.use_structures, '.csv')
-        % Subset structures from csv table
+        % Subset structures from csv table        
         files = dir(fullfile(config.home_path, "annotations/*/*"));
+        files = cat(1, files, dir(fullfile(config.home_path, "annotations/*")));
         idx = string({files.name}) == string(config.use_structures);
         id = readmatrix(fullfile(files(idx).folder, files(idx).name));
     else
@@ -104,7 +106,6 @@ end
 I_mask0 = I_mask;
 if isequal(direction,"atlas_to_image") || isequal(direction,"mri_to_image") ||...
     isequal(config.annotation_mapping,"image")
-    I_mask = permute_orientation(I_mask,'ail',config.orientation); 
     save(config.res_name,'-append','I_mask')
     save(mask_var,'I_mask','-v7.3')
     I_mask = I_mask0;
@@ -116,7 +117,7 @@ if isequal(config.save_registered_images,"true")
     annot_file = fullfile(reg_dir,sprintf('%s_MASK_%s_%d_%s.nii',...
         config.sample_id,strjoin(annot_marker,"_"),....
         target_res, structures));
-    I_mask = permute_orientation(I_mask,'ail',target_or);
+    %I_mask = permute_orientation(I_mask,'ail',target_or);
     I_mask = imresize3(I_mask, 25/target_res, 'Method','nearest');
     niftiwrite(uint16(I_mask),annot_file)
 end

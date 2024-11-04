@@ -29,6 +29,7 @@ y_tiles = length(unique(stack.y));
 
 % Read image size
 tempI = imread(stack.file{1});
+fprintf("Reading image in measure images%s\n",stack.file{1}) %TODO: remove
 [nrows, ncols] = size(tempI);
 
 % Get intensity thresholds

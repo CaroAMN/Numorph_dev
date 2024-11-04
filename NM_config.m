@@ -19,10 +19,10 @@ function [config, path_table] = NM_config(stage, sample, run)
 %
 %--------------------------------------------------------------------------
 
-if nargin<1
-    addpath(genpath(pwd))
-    return
-end
+%if nargin<1
+%    addpath(genpath(pwd))
+%    return
+%end
 
 if nargin<3
     run = false;
@@ -36,23 +36,35 @@ conda_path = 'default';
 
 % Make sure path is set
 home_path = fileparts(which('NM_config'));
-addpath(genpath(home_path))
+%addpath(genpath(home_path))
 cd(home_path)
 
 % Save template variables
-if isequal(stage, 'evaluate')
-    [main_stage, results_directory] = save_vars(stage);
-else
-    main_stage = save_vars(stage);
-end
+% DELETE THIS
+%if isequal(stage, 'evaluate')
+%    [main_stage, results_directory] = save_vars(stage);
+%else
+%    main_stage = save_vars(stage);
+%end
+main_stage = stage;
 tmp_path = fullfile(home_path,'data','tmp','NM_variables.mat');
+disp("NM_config 51: " + tmp_path) %TODO: delete later
+
 
 % Load and append sample info
+% REWRITE THIS THAT NM SAMPLES IS NOT CALLED BUT TH EPROVIDED SAMPLE SHEET IS
+
 if nargin > 1 && ~isequal(main_stage,'evaluate')
-    [img_directory, output_directory] = NM_samples(sample, true);
+    % ORIGINAL CODE
+    %[img_directory, output_directory] = NM_samples(sample, true);
     load(tmp_path,'-mat')
-    
-elseif nargin > 1 && isequal(main_stage,'evaluate')
+
+    % DONT NEED THIS   --------------------------------------------------------  
+        % thanks copilot
+    % FILEPATH: /home/schwitalla/Documents/Numorph/numorph_dev/NM_config.m
+    % BEGIN: ed8c6549bwf9
+    %{
+    elseif nargin > 1 && isequal(main_stage,'evaluate')
     fid = fopen(fullfile(home_path,'templates','NM_samples.m'));
     c = textscan(fid,'%s');
     fclose(fid);
@@ -120,18 +132,21 @@ elseif nargin > 1 && isequal(main_stage,'evaluate')
     end
     
     output_directory = results_directory;
-    use_processed_images = "false";
+    use_processed_images = "stitched";
     clear sample;
     save(tmp_path,'prefix','samples','s_fields','results_path','groups','results_directory','-mat','-append')
+        %}
+    % END: ed8c6549bwf9
 else
     error("Sample information is unspecified. Set 'sample' variable.")
 end
 
 % Check variable lengths for some variables
-check_variable_lengths(main_stage)
+check_variable_lengths(main_stage, home_path)
 
 % Update image directory if using processed or analyzed images
 if ~isequal(use_processed_images,"false")
+    disp(use_processed_images);
     process_directory = fullfile(output_directory,use_processed_images);
     if ~exist(process_directory,'dir')
         warning("Could not locate processed image directory %s.\n" + ...
@@ -188,6 +203,7 @@ if run
     var_directory = fullfile(output_directory,'variables');
     if exist(var_directory,'dir') ~= 7
         mkdir(var_directory);
+        fprintf("Created variables directory %s\n",var_directory)   %TODO: delete later
     end
     
     % Copy variables to output destination
@@ -220,12 +236,15 @@ end
 
 if nargout == 2
     path_table = path_to_table(config);
-end
+    fprintf("Generated path table\n in NM_config.m") %TODO: delete later
+    disp
 
 end
 
+end
 
-function check_variable_lengths(stage)
+
+function check_variable_lengths(stage, path)
 % Check user input variable lengths to make sure they're the correct length
 % and match number of markers in most cases
 
@@ -236,7 +255,10 @@ switch stage
             'elastix_params','rescale_intensities','subtract_background','Gamma','smooth_img','smooth_sigma',...
             'DoG_img','DoG_minmax','DoG_factor','darkfield_intensity', 'resolution','z_initial',...
             'lowerThresh','upperThresh','signalThresh'};
-        load(fullfile('data','tmp','NM_variables.mat'),variable_names{:});
+            %load(tmp_path,'-mat')
+        %load(fullfile('data','tmp','NM_variables.mat'),variable_names{:});
+        %fprintf(fullfile(path,'data','tmp','NM_variables.mat'));
+        load(fullfile(path,'data','tmp','NM_variables.mat'),variable_names{:});
         
         if exist('markers','var') ~= 1  || isempty(markers)
             error("Must provide unique marker names for channel");end
@@ -247,6 +269,7 @@ switch stage
                 channel_num = channel_num(~ig_idx);
             end
         end
+        
         if exist('single_sheet','var') == 1 && length(single_sheet) == 1
             single_sheet = repmat(single_sheet,1,length(markers));end
         if exist('blending_method','var') == 1 && length(blending_method) == 1
