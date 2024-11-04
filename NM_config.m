@@ -146,6 +146,7 @@ check_variable_lengths(main_stage, home_path)
 
 % Update image directory if using processed or analyzed images
 if ~isequal(use_processed_images,"false")
+    disp(use_processed_images);
     process_directory = fullfile(output_directory,use_processed_images);
     if ~exist(process_directory,'dir')
         warning("Could not locate processed image directory %s.\n" + ...

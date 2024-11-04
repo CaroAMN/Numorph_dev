@@ -10,6 +10,7 @@ function [path_table_series, path_table_nii] = path_to_table(config,location,qui
 
 % Check file location if not provided
 if nargin<2
+    disp("nargin<2"); %TODO remove
     if isstring(config) || ischar(config)
         % Directory location and not config structure
         fprintf("%s\t Reading image filename from single folder using default settings \n",datetime('now'))
@@ -56,11 +57,13 @@ end
 
 % Quick load from saved path_table variable
 if nargin<3
+    disp("nargin<3");  %TODO remove
     quick_load = true;
 end
 
 % Overwrite saved path_table variable
 if nargin<4
+    disp("nargin<4");  %TODO remove
     save_table = false;
 end
 
@@ -88,6 +91,22 @@ else
     save_table = true;
 end
 
+% caro workaround
+
+is_dir = contains(location, '/');
+
+if is_dir
+    if contains(location, 'stitched')
+        location = 'stitched';
+    elseif contains(location, 'aligned')
+        location = 'aligned';
+    elseif contains(location, 'resampled')
+        location = 'resampled';
+    end
+end
+
+fprintf("location:"); %TODO remove later
+disp(location);  %TODO remove later
 % Munge paths or read filename information from previously saved variable
 switch location
     case 'raw'

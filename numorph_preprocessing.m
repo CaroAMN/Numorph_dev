@@ -1,4 +1,4 @@
-function preprocessing = numorph_preprocessing(varargin)
+function numorph_preprocessing(varargin)
     
 
 
@@ -33,22 +33,57 @@ function preprocessing = numorph_preprocessing(varargin)
     csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
 
     
+    if (strcmp(stage,'process') || strcmp(stage,'intensity') || strcmp(stage,'align'))
+
+        NM_variables = load(tmp_folder);
+
+        % Debugging information
+        disp('Loaded NM_variables:');
+        disp(NM_variables);
+    
+        if isfield(NM_variables, 'use_processed_images')
+            disp('Size of use_processed_images before assignment:');
+            disp(size(NM_variables.use_processed_images));
+        else
+            disp('Field use_processed_images does not exist in NM_variables.');
+        end
+
+        
+        NM_variables.use_processed_images = "false";
+
+        disp('Size of use_processed_images after assignment:');
+        disp(size(NM_variables.use_processed_images));
+
+        save(tmp_folder, '-struct', 'NM_variables');
+    end
+
+
     switch stage
         case 'process'
             config = NM_config('process', sample_name);
             NM_process(config, "process");
+
         case 'intensity'
             config = NM_config('process', sample_name);
             NM_process(config, "intensity");
+
         case 'align'
             config = NM_config('process', sample_name);
             NM_process(config, "align");
+
         case 'stitch'
             config = NM_config('process', sample_name);
             NM_process(config, "stitch");
+
         case 'resample'
+% maybe i need to find a waay to also allow to load from aligen dir but i need to ask what happens then
+% if pipeline starts from align to stitch then i can handle it differently 
+            NM_variables = load(tmp_folder);
+            NM_variables.use_processed_images = fullfile(output_dir, 'stitched/');
+            save(tmp_folder, '-struct', 'NM_variables');
             config = NM_config('analyze', sample_name);
             NM_analyze(config, "resample");
+
         case 'register'
             config = NM_config('analyze', sample_name);
             NM_analyze(config, "register");
@@ -158,6 +193,10 @@ function preprocessing = numorph_preprocessing(varargin)
     fwrite(fid, jsonStr, 'char');
     fclose(fid);
     fprintf('Converted %s to %s\n', tmp_folder, 'NM_variables.json');
+
+    close all;  % Close all open figures
+
+    
     % remove the NM_variables.mat file
 
     %remove the loaded path_table variable from workspace
@@ -571,7 +610,223 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
         % integer; Search window for finding corresponding tiles (i.e. +/-n z positions)    
         elseif (parameter == "z_window")
             S.z_window = str2double(value);
-        end
+        
+
+        % true, update, false; Perform image resampling 
+        elseif (parameter == "resample_images")
+            S.resample_images = string(value);
+        
+        % true, update, false; Register image to reference atlas.
+        elseif (parameter == "register_images")
+            S.register_images = string(value);
+
+        % true, update, false; Count cell nuclei or other blob objects.
+        elseif (parameter == "count_nuclei")
+            S.count_nuclei = string(value);
+
+        % true, update, false; Classify cell-types for detected nuclei centroids.
+        elseif (parameter == "classify_cells")
+            S.classify_cells = string(value);
+        
+        % Isotropic resample resolution. This is also the resolution at which registration is performed
+        elseif (parameter == "resample_resolution")
+            S.resample_resolution = str2double(value);
+        
+        % Resample specific channels. If empty, only registration channels will be resampled
+        elseif (parameter == "resample_channels")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.resample_channels = double([]);
+            else
+                S.resample_channels = str2double(value);
+            end
+        
+        % true, false; Use annotation mask for cell counting
+        elseif (parameter == "use_annotation_mask")
+            S.use_annotation_mask = string(value);
+        
+        % atlas, image; Specify whether annotation file is mapped to the atlas or light-sheet image
+        elseif (parameter == "annotation_mapping")
+            S.annotation_mapping = string(value);
+        
+        % File for storing structure annotation data.
+        % Specify .mat file in /data/annotation_data if annotation_mapping is to the atlas. To generate a new .mat file with custom annotations, see 'help munge_atlas'
+        % Specify .nii file if annotation_mapping is to the image. Annotations here are already aligned to the image. Specify the full path for each sample in NM_samples.
+        elseif (parameter == "annotation_file")
+            S.annotation_file = string(value);
+        
+        % Specify csv file in /annotations detailing which structures to analyze
+        % Alternatively, specify a numeric array structure indexes
+        elseif (parameter == "use_structures")
+            S.use_structures = string(value); % nope hier muss ich array oder empty array machen oder file path
+
+        % Isotropic resolution of the annotation file. Only needed when mapping is to the image.
+        elseif (parameter == "annotation_resolution")
+            S.annotation_resolution = str2double(value);
+        
+        % atlas_to_image, image_to_atlas; Direction to perform registration
+        elseif (parameter == "registration_direction")
+            S.registration_direction = string(value);
+        
+        % default, points, or name of folder containing elastix registration parameters in /data/elastix_parameter_files/atlas_registration
+        elseif (parameter == "registration_parameters")
+            S.registration_parameters = string(value);
+
+        % integer; Which light-sheet channels to register. Can select more than 1
+        elseif (parameter == "registration_channels")
+            S.registration_channels = str2double(value);
+        
+        % image. Pre-align multiple light-sheet images by rigid transformation prior to registration
+        elseif (parameter == "registration_prealignment")
+            S.registration_prealignment = string(value);
+
+        % ara_nissl_25.nii and/or average_template_25.nii and/or a specific atlas .nii file in /data/atlas
+        elseif (parameter == "atlas_file")
+            S.atlas_file = string(value);
+        
+        % Use points during registration
+        elseif (parameter == "use_points")
+            S.use_points = string(value);
+
+        % Not used
+        elseif (parameter == "prealign_annotation_index")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.prealign_annotation_index = double([]);
+            else
+                S.prealign_annotation_index = str2double(value);
+            end
+        
+        % Name of points file to guide registration
+        elseif (parameter == "points_file")
+            S.points_file = string(value);
+
+        % Whether to save registered images
+        elseif (parameter == "save_registered_images")
+            S.save_registered_images = string(value);
+        
+        % Remove olfactory bulbs and cerebellum from atlas ROI
+        elseif (parameter == "mask_cerebellum_olfactory")
+            S.mask_cerebellum_olfactory = string(value);
+        
+        % 3dunet, hessian.
+        elseif (parameter == "count_method")
+            S.count_method = string(value);
+
+        % Minimum intensity for cell nuclei
+        elseif (parameter == "min_intensity")
+            S.min_intensity = str2double(value);
+        
+        % Model file name located in /analysis/3dunet/nuclei/models
+        elseif (parameter == "model_file")
+            S.model_file = string(value);
+        
+        % Cuda visible device index.
+        elseif (parameter == "gpu")
+            S.gpu = string(value);
+       
+        % Max chunk size for running hessian 
+        elseif (parameter == "chunk_size")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.chunk_size = double([]);
+            else
+                S.chunk_size = str2double(value);
+            end
+        
+        % Chunk overlap
+        elseif (parameter == "chunk_overlap")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.chunk_overlap = double([]);
+            else
+                S.chunk_overlap = str2double(value);
+            end
+        
+        % Average nucleus diameter in pixels
+        elseif (parameter == "average_nuc_diameter")
+            S.average_nuc_diameter = str2double(value);
+
+        % threhsold, svm; Cell-type classification method
+        elseif (parameter == "classify_method")
+            S.classify_method = string(value);
+
+        % which channels to use for classification
+        elseif (parameter == "classify_channels")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.classify_channels = double([]);
+            else
+                S.classify_channels = str2double(value);
+            end
+        
+        % "true","false"; If set to "true", treat channel 1 as nuclear label that isn't classified 
+        elseif (parameter == "contains_nuclear_channel")
+            S.contains_nuclear_channel = string(value);
+
+        % true, false; Update channel intensities measurements and save into centroids sheet
+        elseif (parameter == "remeasure_centroids")
+            S.remeasure_centroids = string(value);
+
+        % Set raw intensity values for thesholding. Leave empty to use expression values
+        elseif (parameter == "intensity_thresholds")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.intensity_thresholds = double([]);
+            else
+                S.intensity_thresholds = str2double(value);
+            end
+        
+        % Threshold expression
+        elseif (parameter == "intensity_expression")
+            S.intensity_expression = str2double(value);
+
+        % Apply z normalization
+        elseif (parameter == "z_normalization")
+            S.z_normalization = string(value);
+
+        
+    
+        % Load previous centroid patches
+        elseif  (parameter == "load_patches")
+            S.load_patches = string(value);
+
+        
+        % Merge patch annotation from different groups for training
+        elseif  (parameter == "load_groups")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.load_groups = string([]);
+            else
+                S.load_groups = string(value);
+            end
+    
+        % Which classes to keep after prediction. Other labeled classes will be discarded
+        elseif  (parameter == "keep_classes")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.keep_classes = string([]);
+            else
+                S.keep_classes = string(value);
+            end
+
+        % 1x2 integer. [Patch size for viewing, patch size read by classifier]
+        elseif  (parameter == "patch_size")
+            value = split(value, ';');
+            if (strlength(value) == 0)
+                S.patch_size = double([]);
+            else
+                S.patch_size = str2double(value);
+            end
+        
+        % integer. Number of patches to generate
+        elseif  (parameter == "n_patches")
+            S.n_patches = str2double(value);
+        
+        % numeric <1. Remove cells dim in every channel from classifier. (i.e. 0.5 removes cells below 50th percentile for all channels)
+        else  (parameter == "min_class_thresh")
+            S.min_class_thresh = str2double(value);
+        end 
     end
     % Save the structure as a .mat file
     save(matFilePath, '-struct', 'S');

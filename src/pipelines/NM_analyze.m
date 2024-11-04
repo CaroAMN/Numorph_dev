@@ -52,10 +52,16 @@ fprintf("%s\t Working on sample %s \n",datetime('now'),config.sample_id)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Generate table containing image information
 if isfield(config,'mri_directory') && ~isempty(config.mri_directory)
+    fprintf('%s\t MRI data loaded \n',datetime('now')); % remove later
+    disp(config.mri_directory); % remove later
     [path_table, path_table_nii] = path_to_table(config, config.use_processed_images, false);
+    
 else
+    fprintf('other'); % remove later
+    disp(config.use_processed_images); % remove later
     path_table = path_to_table(config, config.use_processed_images, false);
     path_table_nii = [];
+   
 end
 
 % If markers ignored, add these from raw
