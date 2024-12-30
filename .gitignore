@@ -20,3 +20,11 @@ src/analysis/3dunet/nuclei/NM_config.mat
 *.raw
 *.h5
 *.asv
+matlab_workspace.mat
+converted_data.json
+numorph_preprocessingdocker/*
+numorph_preprocessingstandaloneApplication/*
+numorph_preprocessing_moduledocker/*
+numorph_preprocessing_modulestandaloneApplication/*
+numorph_preprocessingpythonPackage/*
+numorph_python-test.ipynb
