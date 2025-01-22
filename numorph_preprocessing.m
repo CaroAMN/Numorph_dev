@@ -21,15 +21,15 @@ function numorph_preprocessing(varargin)
 
     % Run the preprocessing pipeline
 
-    %addpath(genpath(pwd)); % do i need this ?
+    
     NM_setup; % setup numorph
 
     % read in the config file which is a csv file
     % convert config file to a structure like in original numorph
     home_path = fileparts(which('NM_config'));
-    fprintf('Home path: %s\n', home_path);
+    %fprintf('Home path: %s\n', home_path);
     tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
-    fprintf('Temp folder: %s\n', tmp_folder);
+    %fprintf('Temp folder: %s\n', tmp_folder);
     csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
 
     
@@ -38,8 +38,8 @@ function numorph_preprocessing(varargin)
         NM_variables = load(tmp_folder);
 
         % Debugging information
-        disp('Loaded NM_variables:');
-        disp(NM_variables);
+        %disp('Loaded NM_variables:');
+        %disp(NM_variables);
     
         if isfield(NM_variables, 'use_processed_images')
             disp('Size of use_processed_images before assignment:');
@@ -51,8 +51,8 @@ function numorph_preprocessing(varargin)
         
         NM_variables.use_processed_images = "false";
 
-        disp('Size of use_processed_images after assignment:');
-        disp(size(NM_variables.use_processed_images));
+        %disp('Size of use_processed_images after assignment:');
+        %disp(size(NM_variables.use_processed_images));
 
         save(tmp_folder, '-struct', 'NM_variables');
     end
@@ -75,20 +75,20 @@ function numorph_preprocessing(varargin)
             config = NM_config('process', sample_name);
             NM_process(config, "stitch");
 
-        case 'resample'
+        %case 'resample'
 % maybe i need to find a waay to also allow to load from aligen dir but i need to ask what happens then
 % if pipeline starts from align to stitch then i can handle it differently 
-            NM_variables = load(tmp_folder);
-            NM_variables.use_processed_images = fullfile(output_dir, 'stitched/');
-            save(tmp_folder, '-struct', 'NM_variables');
-            config = NM_config('analyze', sample_name);
-            NM_analyze(config, "resample");
+           % NM_variables = load(tmp_folder);
+           % NM_variables.use_processed_images = fullfile(output_dir, 'stitched/');
+           %save(tmp_folder, '-struct', 'NM_variables');
+           % config = NM_config('analyze', sample_name);
+           % NM_analyze(config, "resample");
 
-        case 'register'
-            config = NM_config('analyze', sample_name);
-            NM_analyze(config, "register");
+        %case 'register'
+           % config = NM_config('analyze', sample_name);
+           % NM_analyze(config, "register");
         otherwise
-            error('Invalid step. Please choose from: process, intensity, align, stitch, resample, register');
+            error('Invalid step. Please choose from: process, intensity, align, stitch');
     end
 
     
@@ -99,7 +99,7 @@ function numorph_preprocessing(varargin)
     for i = 1:length(matFilePaths)
         % Construct the full path to the .mat file
         matFilePath = matFilePaths{i};
-        disp(matFilePath);
+        % disp(matFilePath);
     
         % Load the .mat file
         loadedData = load(matFilePath);
