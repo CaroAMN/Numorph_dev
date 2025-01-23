@@ -61,16 +61,18 @@ if ~ismember({step},{'process','align','stitch','intensity'})
     error("Invalid processing step specified.")
 end
 
+disp("config:") %TODO: remove
+disp(config.output_directory)    %TODO: remove
 % Make an output directory
 if exist(config.output_directory,'dir') ~= 7
     mkdir(config.output_directory);
 end
 
 % Make a variables directory
-config.var_directory = fullfile(config.output_directory,'variables');
-if exist(config.var_directory,'dir') ~= 7
-    mkdir(config.var_directory);
-end
+%config.var_directory = fullfile(config.output_directory,'variables');
+%if exist(config.var_directory,'dir') ~= 7
+%    mkdir(config.var_directory);
+%end
 
 fprintf("%s\t Working on sample %s \n",datetime('now'),config.sample_id)
 

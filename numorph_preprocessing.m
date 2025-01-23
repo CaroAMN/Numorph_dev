@@ -1,61 +1,60 @@
 function numorph_preprocessing(varargin)
     
 
-
-
-    % step: possible steps to run for preprocessing 
-    % 'process' : runs complete preprocessing pipeline
-    % 'intensity' : runs intensity adjustment step
-    % 'align' : runs alignment step
-    % 'stitch' : runs stitching step
-
     %call the parser function to parse the input arguments
     params = parseInputArgs(varargin{:});
 
     % Get the values of the parameters
     input_dir = params.input_dir;
     output_dir = params.output_dir;
+    disp("Output directory:");
+    disp(output_dir);
     parameter_file = params.parameter_file;
     sample_name = params.sample_name;
     stage = params.stage;
 
-    % Run the preprocessing pipeline
 
-    
-    NM_setup; % setup numorph
+    % Run the preprocessing pipeline
+    %addpath(genpath(pwd));
+    NM_setup % setup numorph
 
     % read in the config file which is a csv file
     % convert config file to a structure like in original numorph
     home_path = fileparts(which('NM_config'));
-    %fprintf('Home path: %s\n', home_path);
-    tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
-    %fprintf('Temp folder: %s\n', tmp_folder);
-    csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
-
     
-    if (strcmp(stage,'process') || strcmp(stage,'intensity') || strcmp(stage,'align'))
-
-        NM_variables = load(tmp_folder);
-
-        % Debugging information
-        %disp('Loaded NM_variables:');
-        %disp(NM_variables);
-    
-        if isfield(NM_variables, 'use_processed_images')
-            disp('Size of use_processed_images before assignment:');
-            disp(size(NM_variables.use_processed_images));
-        else
-            disp('Field use_processed_images does not exist in NM_variables.');
-        end
-
-        
-        NM_variables.use_processed_images = "false";
-
-        %disp('Size of use_processed_images after assignment:');
-        %disp(size(NM_variables.use_processed_images));
-
-        save(tmp_folder, '-struct', 'NM_variables');
+    % check if not NM_variables exist 
+    if ~exist(fullfile(home_path,'data','tmp', 'NM_variables.mat'), 'file') || isempty(params.NM_variables)
+        tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
+        csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
+    else
+        tmp_folder = fullfile(home_path,'data','tmp',params.NM_variables);
     end
+
+    
+
+
+    NM_variables = load(tmp_folder);
+    % Debugging information
+    %disp('Loaded NM_variables:');
+    %disp(NM_variables);
+
+    if isfield(NM_variables, 'use_processed_images')
+        disp('Size of use_processed_images before assignment:');
+        disp(size(NM_variables.use_processed_images));
+    else
+        disp('Field use_processed_images does not exist in NM_variables.');
+    end
+
+    
+    NM_variables.use_processed_images = "false";
+    NM_variables.output_directory = output_dir;
+    disp('output_dir:');
+    disp(output_dir);
+
+    %disp('Size of use_processed_images after assignment:');
+    %disp(size(NM_variables.use_processed_images));
+
+    save(tmp_folder, '-struct', 'NM_variables');
 
 
     switch stage
@@ -180,7 +179,7 @@ function numorph_preprocessing(varargin)
     % load the NM_variables.mat file
     varData = load(tmp_folder);
     %save the NM_variables.mat file also as .mat file in output dir 
-    matFilePath = fullfile(output_dir, 'NM_variables.mat');
+    save(fullfile(output_dir, 'NM_variables.mat'), 'varData');
     % convert the structure to json
     jsonStr = jsonencode(varData);
     % construct the path for the output JSON file
@@ -863,6 +862,8 @@ end
 function params = parseInputArgs(varargin)
     % Create an input parser
     p = inputParser;
+    p.CaseSensitive = false;
+    p.KeepUnmatched = true;
 
     % Define the required parameters
     addParameter(p, 'input_dir', '', @ischar);
@@ -870,6 +871,7 @@ function params = parseInputArgs(varargin)
     addParameter(p, 'parameter_file', '', @ischar);
     addParameter(p, 'sample_name', '', @ischar);
     addParameter(p, 'stage', '', @ischar);
+    addParameter(p, 'NM_variables', '', @ischar);
 
     % Parse the inputs
     parse(p, varargin{:});
@@ -880,6 +882,7 @@ function params = parseInputArgs(varargin)
     params.parameter_file = p.Results.parameter_file;
     params.sample_name = p.Results.sample_name;
     params.stage = p.Results.stage;
+    params.NM_variables = p.Results.NM_variables;
 
     % Check if required arguments exsit 
     if isempty (params.input_dir)
