@@ -28,3 +28,5 @@ numorph_preprocessing_moduledocker/*
 numorph_preprocessing_modulestandaloneApplication/*
 numorph_preprocessingpythonPackage/*
 numorph_python-test.ipynb
+numorph_analyzestandaloneApplication/*
+numorph_analyzedocker/*

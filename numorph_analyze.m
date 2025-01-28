@@ -15,7 +15,7 @@ function numorph_analyze(varargin)
 
 
     % Run the analyze pipeline
-    %addpath(genpath(pwd));
+    addpath(genpath(pwd));
     NM_setup 
 
     % read in the config file which is a csv file
@@ -47,13 +47,13 @@ function numorph_analyze(varargin)
     %end
 
     % check if the use_processed_images field is empty
-    if isempty(params.use_processed_images)
-        NM_variables.use_processed_images = "false";
-    else
-        NM_variables.use_processed_images = params.use_processed_images;
-    end
+    %if ~isfield(params, 'use_processed_images')
+    %    NM_variables.use_processed_images = "false";
+    %else
+    %    NM_variables.use_processed_images = params.use_processed_images;
+    %end
     
-
+    NM_variables.use_processed_images = "stitched";
     NM_variables.output_directory = output_dir;
     disp('output_dir:');
     disp(output_dir);
@@ -947,7 +947,7 @@ function params = parseInputArgs(varargin)
     addParameter(p, 'sample_name', '', @ischar);
     addParameter(p, 'stage', '', @ischar);
     addParameter(p, 'NM_variables', '', @ischar);
-    addParameter(p, 'use_processd_images', '', @ischar);
+    addParameter(p, 'use_processed_images', '', @ischar);
 
     % Parse the inputs
     parse(p, varargin{:});
@@ -959,7 +959,7 @@ function params = parseInputArgs(varargin)
     params.sample_name = p.Results.sample_name;
     params.stage = p.Results.stage;
     params.NM_variables = p.Results.NM_variables;
-    params.use_processd_images = p.Results.use_processd_images;
+    params.use_processed_images = p.Results.use_processed_images;
 
     % Check if required arguments exsit 
     if isempty (params.input_dir)
