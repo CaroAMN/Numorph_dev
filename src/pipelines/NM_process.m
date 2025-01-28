@@ -54,7 +54,8 @@ if nargin<3
 elseif ~use_adjustments
     config.adjust_intensity = "false";
 end
-
+disp("use_adjustments:"); %TODO: remove
+disp(use_adjustments); %TODO: remove
 % Check step input
 step = char(step);
 if ~ismember({step},{'process','align','stitch','intensity'})
@@ -113,6 +114,7 @@ if any(use_adjustments) || any(strcmp(step,'intensity'))
     if isequal(step,'stitch') || isequal(step,'align')
         config.adjust_intensity = "true";
     end
+    disp("i will execute  performe intesnity now");
     [config, path_table] = perform_intensity_adjustment(config, path_table, nrows, ncols);
 end
 
