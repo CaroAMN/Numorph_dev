@@ -1,61 +1,66 @@
 function numorph_preprocessing(varargin)
     
 
-
-
-    % step: possible steps to run for preprocessing 
-    % 'process' : runs complete preprocessing pipeline
-    % 'intensity' : runs intensity adjustment step
-    % 'align' : runs alignment step
-    % 'stitch' : runs stitching step
-
     %call the parser function to parse the input arguments
     params = parseInputArgs(varargin{:});
 
     % Get the values of the parameters
     input_dir = params.input_dir;
     output_dir = params.output_dir;
+    disp("Output directory:");
+    disp(output_dir);
     parameter_file = params.parameter_file;
     sample_name = params.sample_name;
     stage = params.stage;
 
-    % Run the preprocessing pipeline
 
-    %addpath(genpath(pwd)); % do i need this ?
-    NM_setup; % setup numorph
+    % Run the preprocessing pipeline
+    %addpath(genpath(pwd));
+    NM_setup % setup numorph
 
     % read in the config file which is a csv file
     % convert config file to a structure like in original numorph
     home_path = fileparts(which('NM_config'));
-    fprintf('Home path: %s\n', home_path);
-    tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
-    fprintf('Temp folder: %s\n', tmp_folder);
-    csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
-
     
-    if (strcmp(stage,'process') || strcmp(stage,'intensity') || strcmp(stage,'align'))
-
+    % check if not NM_variables exist 
+    if ~exist(fullfile(home_path,'data','tmp', 'NM_variables.mat'), 'file') || isempty(params.NM_variables)
+        tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
+        disp("hi, i will now read the csv file");
+        csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
         NM_variables = load(tmp_folder);
+    else
+        disp("i got the NM_variables.mat file");
+        NM_variables = load(params.NM_variables);
+        tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
 
-        % Debugging information
-        disp('Loaded NM_variables:');
-        disp(NM_variables);
-    
-        if isfield(NM_variables, 'use_processed_images')
-            disp('Size of use_processed_images before assignment:');
-            disp(size(NM_variables.use_processed_images));
-        else
-            disp('Field use_processed_images does not exist in NM_variables.');
-        end
-
-        
-        NM_variables.use_processed_images = "false";
-
-        disp('Size of use_processed_images after assignment:');
-        disp(size(NM_variables.use_processed_images));
-
-        save(tmp_folder, '-struct', 'NM_variables');
     end
+    %disp("i got the NM_variables.mat file");
+
+    
+
+
+    %NM_variables = load(tmp_folder);
+    % Debugging information
+    %disp('Loaded NM_variables:');
+    %disp(NM_variables);
+
+    if isfield(NM_variables, 'use_processed_images')
+        disp('Size of use_processed_images before assignment:');
+        disp(size(NM_variables.use_processed_images));
+    else
+        disp('Field use_processed_images does not exist in NM_variables.');
+    end
+
+    
+    NM_variables.use_processed_images = "false";
+    NM_variables.output_directory = output_dir;
+    disp('output_dir:');
+    disp(output_dir);
+
+    %disp('Size of use_processed_images after assignment:');
+    %disp(size(NM_variables.use_processed_images));
+
+    save(tmp_folder, '-struct', 'NM_variables');
 
 
     switch stage
@@ -66,6 +71,13 @@ function numorph_preprocessing(varargin)
         case 'intensity'
             config = NM_config('process', sample_name);
             NM_process(config, "intensity");
+            
+            % get files that match adj_params.mat and thresholds.json
+            %adj_params_file = fullfile(output_dir, 'variables', 'adj_params.mat');
+            %thresholds_file = fullfile(output_dir, 'variables', 'thresholds.json');
+            % convert adj_params.mat to adj_params.json
+            %convertMatFile(adj_params_file);
+            %convertMatFile(thresholds_file);
 
         case 'align'
             config = NM_config('process', sample_name);
@@ -75,126 +87,122 @@ function numorph_preprocessing(varargin)
             config = NM_config('process', sample_name);
             NM_process(config, "stitch");
 
-        case 'resample'
-% maybe i need to find a waay to also allow to load from aligen dir but i need to ask what happens then
-% if pipeline starts from align to stitch then i can handle it differently 
-            NM_variables = load(tmp_folder);
-            NM_variables.use_processed_images = fullfile(output_dir, 'stitched/');
-            save(tmp_folder, '-struct', 'NM_variables');
-            config = NM_config('analyze', sample_name);
-            NM_analyze(config, "resample");
-
-        case 'register'
-            config = NM_config('analyze', sample_name);
-            NM_analyze(config, "register");
+       
         otherwise
-            error('Invalid step. Please choose from: process, intensity, align, stitch, resample, register');
+            error('Invalid step. Please choose from: process, intensity, align, stitch');
     end
 
-    
-
-    matFilePaths = getAllMatFiles(output_dir);
-    
-    % Loop through each .mat file
-    for i = 1:length(matFilePaths)
-        % Construct the full path to the .mat file
-        matFilePath = matFilePaths{i};
-        disp(matFilePath);
-    
-        % Load the .mat file
-        loadedData = load(matFilePath);
-    
-        % Assuming the .mat file contains a single variable or a structure.
-        % You might need to adjust this part if your .mat files are different.
-        dataFieldNames = fieldnames(loadedData);
-        if length(dataFieldNames) == 1
-            data = loadedData.(dataFieldNames{1});
-        
-            % Check if the data is a table, if not, you might need to convert or handle differently
-            if istable(data)
-                % Construct the path for the .csv file
-                % It uses the same base filename as the .mat file
-                [filePath, fileName, ~] = fileparts(matFilePath);
-                csvFilePath = fullfile(filePath, [fileName, '.csv']);
-            
-                % Write the table to a .csv file
-                writetable(data, csvFilePath);
-                fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.csv']);
-            elseif isstruct(data)
-                % Convert structure to JSON string
-                jsonStr = jsonencode(data);
-                % Construct the path for the output JSON file
-                [filePath, fileName, ~] = fileparts(matFilePath);
-                jsonFilePath = fullfile(filePath, [fileName, '.json']);
-                
-                fid = fopen(jsonFilePath, 'w');
-                if fid == -1
-                    error('Cannot create JSON file');
-                end
-                fwrite(fid, jsonStr, 'char');
-                fclose(fid);
-                fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
-            else
-                % Convert structure to JSON string
-                jsonStr = jsonencode(data);
-                % Construct the path for the output JSON file
-                [filePath, fileName, ~] = fileparts(matFilePath);
-                jsonFilePath = fullfile(filePath, [fileName, '.json']);
-                
-                fid = fopen(jsonFilePath, 'w');
-                if fid == -1
-                    error('Cannot create JSON file');
-                end
-                fwrite(fid, jsonStr, 'char');
-                fclose(fid);
-                fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
-            end
-        % Assuming the the .mat file contains a structure with multiple fields    
-        elseif length(dataFieldNames) >= 1
-            % Loop through each field if you have multiple fields in your structure
-            allData = struct();
-            for idx = 1:length(dataFieldNames)
-                fieldName = dataFieldNames{idx};
-                allData.(fieldName) = loadedData.(fieldName);
-            end
-            % Convert the structure to a JSON string
-            jsonData = jsonencode(allData);
-            
-            % Define the JSON file path
-            [filePath, fileName, ~] = fileparts(matFilePath);
-            jsonFilePath = fullfile(filePath, [fileName, '.json']);
-            % Write the JSON string to a file
-            fileId = fopen(jsonFilePath, 'w');
-            if fileId == -1
-                error('Failed to create JSON file: %s', jsonFilePath);
-            end
-            fwrite(fileId, jsonData, 'char');
-            fclose(fileId);
-            disp(['Data converted and saved to JSON: ', jsonFilePath]);
-        else
-            warning('%s contains no variables and was not converted.', matFilePaths{i});
-        end
-    end
-
-    % convert the NM_variables.mat file to json
-    % load the NM_variables.mat file
     varData = load(tmp_folder);
-    %save the NM_variables.mat file also as .mat file in output dir 
-    matFilePath = fullfile(output_dir, 'NM_variables.mat');
-    % convert the structure to json
-    jsonStr = jsonencode(varData);
-    % construct the path for the output JSON file
-    jsonFilePath = fullfile(output_dir, 'NM_variables.json');
-    % write the JSON string to a file
-    fid = fopen(jsonFilePath, 'w');
-    if fid == -1
-        error('Cannot create JSON file');
-    end
-    fwrite(fid, jsonStr, 'char');
-    fclose(fid);
-    fprintf('Converted %s to %s\n', tmp_folder, 'NM_variables.json');
+    save(fullfile(output_dir, 'NM_variables.mat'), 'varData');
+    close all;
+    clear varData;
 
-    close all;  % Close all open figures
+    
+
+
+
+    %matFilePaths = getAllMatFiles(output_dir);
+    %
+    %% Loop through each .mat file
+    %for i = 1:length(matFilePaths)
+    %    % Construct the full path to the .mat file
+    %    matFilePath = matFilePaths{i};
+    %    % disp(matFilePath);
+    %
+    %    % Load the .mat file
+    %    loadedData = load(matFilePath);
+    %
+    %    % Assuming the .mat file contains a single variable or a structure.
+    %    % You might need to adjust this part if your .mat files are different.
+    %    dataFieldNames = fieldnames(loadedData);
+    %    if length(dataFieldNames) == 1
+    %        data = loadedData.(dataFieldNames{1});
+    %    
+    %        % Check if the data is a table, if not, you might need to convert or handle differently
+    %        if istable(data)
+    %            % Construct the path for the .csv file
+    %            % It uses the same base filename as the .mat file
+    %            [filePath, fileName, ~] = fileparts(matFilePath);
+    %            csvFilePath = fullfile(filePath, [fileName, '.csv']);
+    %        
+    %            % Write the table to a .csv file
+    %            writetable(data, csvFilePath);
+    %            fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.csv']);
+    %        elseif isstruct(data)
+    %            % Convert structure to JSON string
+    %            jsonStr = jsonencode(data);
+    %            % Construct the path for the output JSON file
+    %            [filePath, fileName, ~] = fileparts(matFilePath);
+    %            jsonFilePath = fullfile(filePath, [fileName, '.json']);
+    %            
+    %            fid = fopen(jsonFilePath, 'w');
+    %            if fid == -1
+    %                error('Cannot create JSON file');
+    %            end
+    %            fwrite(fid, jsonStr, 'char');
+    %            fclose(fid);
+    %            fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
+    %        else
+    %            % Convert structure to JSON string
+    %            jsonStr = jsonencode(data);
+    %            % Construct the path for the output JSON file
+    %            [filePath, fileName, ~] = fileparts(matFilePath);
+    %            jsonFilePath = fullfile(filePath, [fileName, '.json']);
+    %            
+    %            fid = fopen(jsonFilePath, 'w');
+    %            if fid == -1
+    %                error('Cannot create JSON file');
+    %            end
+    %            fwrite(fid, jsonStr, 'char');
+    %            fclose(fid);
+    %            fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
+    %        end
+    %    % Assuming the the .mat file contains a structure with multiple fields    
+    %    elseif length(dataFieldNames) >= 1
+    %        % Loop through each field if you have multiple fields in your structure
+    %        allData = struct();
+    %        for idx = 1:length(dataFieldNames)
+    %            fieldName = dataFieldNames{idx};
+    %            allData.(fieldName) = loadedData.(fieldName);
+    %        end
+    %        % Convert the structure to a JSON string
+    %        jsonData = jsonencode(allData);
+    %        
+    %        % Define the JSON file path
+    %        [filePath, fileName, ~] = fileparts(matFilePath);
+    %        jsonFilePath = fullfile(filePath, [fileName, '.json']);
+    %        % Write the JSON string to a file
+    %        fileId = fopen(jsonFilePath, 'w');
+    %        if fileId == -1
+    %            error('Failed to create JSON file: %s', jsonFilePath);
+    %        end
+    %        fwrite(fileId, jsonData, 'char');
+    %        fclose(fileId);
+    %        disp(['Data converted and saved to JSON: ', jsonFilePath]);
+    %    else
+    %        warning('%s contains no variables and was not converted.', matFilePaths{i});
+    %    end
+    %end
+    %
+    %% convert the NM_variables.mat file to json
+    %% load the NM_variables.mat file
+    %varData = load(tmp_folder);
+    %%save the NM_variables.mat file also as .mat file in output dir 
+    %save(fullfile(output_dir, 'NM_variables.mat'), 'varData');
+    %% convert the structure to json
+    %jsonStr = jsonencode(varData);
+    %% construct the path for the output JSON file
+    %jsonFilePath = fullfile(output_dir, 'NM_variables.json');
+    %% write the JSON string to a file
+    %fid = fopen(jsonFilePath, 'w');
+    %if fid == -1
+    %    error('Cannot create JSON file');
+    %end
+    %fwrite(fid, jsonStr, 'char');
+    %fclose(fid);
+    %fprintf('Converted %s to %s\n', tmp_folder, 'NM_variables.json');
+    %
+    %close all;  % Close all open figures
 
     
     % remove the NM_variables.mat file
@@ -859,10 +867,88 @@ function fileList = getAllMatFiles(startPath)
     end
 end
 
+function [status, outputPath] = convertMatFile(matFile)
+    
+    status = false; 
+    outputPath = '';
+
+    try
+        % Load the .mat file
+        loadedData = load(matFilePath);
+        
+        % Get field names
+        dataFieldNames = fieldnames(loadedData);
+        
+        % Process single field
+        if length(dataFieldNames) == 1
+            data = loadedData.(dataFieldNames{1});
+            
+            % Handle table data
+            if istable(data)
+                [filePath, fileName, ~] = fileparts(matFilePath);
+                outputPath = fullfile(filePath, [fileName, '.csv']);
+                writetable(data, outputPath);
+                
+            % Handle structure or other data types
+            else
+                [filePath, fileName, ~] = fileparts(matFilePath);
+                outputPath = fullfile(filePath, [fileName, '.json']);
+                
+                % Convert to JSON
+                if isstruct(data)
+                    jsonStr = jsonencode(data);
+                else
+                    jsonStr = jsonencode(data);
+                end
+                
+                % Write JSON file
+                writeJSON(outputPath, jsonStr);
+            end
+            
+        % Process multiple fields
+        elseif length(dataFieldNames) > 1
+            % Combine all fields into one structure
+            allData = struct();
+            for idx = 1:length(dataFieldNames)
+                fieldName = dataFieldNames{idx};
+                allData.(fieldName) = loadedData.(fieldName);
+            end
+            
+            % Save as JSON
+            [filePath, fileName, ~] = fileparts(matFilePath);
+            outputPath = fullfile(filePath, [fileName, '.json']);
+            writeJSON(outputPath, jsonencode(allData));
+            
+        else
+            warning('File contains no variables: %s', matFilePath);
+            return;
+        end
+        
+        % Set success status
+        status = true;
+        fprintf('Converted %s to %s\n', matFilePath, outputPath);
+        
+    catch ME
+        warning('Failed to convert file %s: %s', matFilePath, ME.message);
+        return;
+    end
+end
+
+function writeJSON(filepath, jsonStr)
+    fid = fopen(filepath, 'w');
+    if fid == -1
+        error('Cannot create JSON file: %s', filepath);
+    end
+    fwrite(fid, jsonStr, 'char');
+    fclose(fid);
+end
+
 % function that parses commanline parameters
 function params = parseInputArgs(varargin)
     % Create an input parser
     p = inputParser;
+    p.CaseSensitive = false;
+    p.KeepUnmatched = true;
 
     % Define the required parameters
     addParameter(p, 'input_dir', '', @ischar);
@@ -870,6 +956,7 @@ function params = parseInputArgs(varargin)
     addParameter(p, 'parameter_file', '', @ischar);
     addParameter(p, 'sample_name', '', @ischar);
     addParameter(p, 'stage', '', @ischar);
+    addParameter(p, 'NM_variables', '', @ischar);
 
     % Parse the inputs
     parse(p, varargin{:});
@@ -880,6 +967,7 @@ function params = parseInputArgs(varargin)
     params.parameter_file = p.Results.parameter_file;
     params.sample_name = p.Results.sample_name;
     params.stage = p.Results.stage;
+    params.NM_variables = p.Results.NM_variables;
 
     % Check if required arguments exsit 
     if isempty (params.input_dir)

@@ -54,23 +54,26 @@ if nargin<3
 elseif ~use_adjustments
     config.adjust_intensity = "false";
 end
-
+disp("use_adjustments:"); %TODO: remove
+disp(use_adjustments); %TODO: remove
 % Check step input
 step = char(step);
 if ~ismember({step},{'process','align','stitch','intensity'})
     error("Invalid processing step specified.")
 end
 
+disp("config:") %TODO: remove
+disp(config.output_directory)    %TODO: remove
 % Make an output directory
 if exist(config.output_directory,'dir') ~= 7
     mkdir(config.output_directory);
 end
 
 % Make a variables directory
-config.var_directory = fullfile(config.output_directory,'variables');
-if exist(config.var_directory,'dir') ~= 7
-    mkdir(config.var_directory);
-end
+%config.var_directory = fullfile(config.output_directory,'variables');
+%if exist(config.var_directory,'dir') ~= 7
+%    mkdir(config.var_directory);
+%end
 
 fprintf("%s\t Working on sample %s \n",datetime('now'),config.sample_id)
 
@@ -111,6 +114,7 @@ if any(use_adjustments) || any(strcmp(step,'intensity'))
     if isequal(step,'stitch') || isequal(step,'align')
         config.adjust_intensity = "true";
     end
+    disp("i will execute  performe intesnity now");
     [config, path_table] = perform_intensity_adjustment(config, path_table, nrows, ncols);
 end
 
