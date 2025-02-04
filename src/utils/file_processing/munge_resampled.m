@@ -10,6 +10,7 @@ paths_sub = dir(fullfile(config.output_directory,'resampled'));
 % Check .nii in current folder
 paths_sub = paths_sub(arrayfun(@(x) contains(x.name,'.nii'),paths_sub));
 
+
 % Create new field for file location
 C = arrayfun(@(x) fullfile(paths_sub(1).folder,x.name),paths_sub,'UniformOutput',false);
 if length(C) > 1
@@ -28,6 +29,7 @@ for i = 1:length(paths_sub)
     paths_sub(i).sample_id = string(components{i,1});
     paths_sub(i).markers = string(components{i,3});
 end
+
 
 channel_num = cellfun(@(s) str2double(s(2)),components(:,2),'UniformOutput',false);
 [paths_sub.channel_num] = channel_num{:,1};

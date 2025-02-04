@@ -48,51 +48,52 @@ end
 
 fprintf("%s\t Working on sample %s \n",datetime('now'),config.sample_id)
 
-%% Read image filename information
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Generate table containing image information
-if isfield(config,'mri_directory') && ~isempty(config.mri_directory)
-    fprintf('%s\t MRI data loaded \n',datetime('now')); % remove later
-    disp(config.mri_directory); % remove later
-    [path_table, path_table_nii] = path_to_table(config, config.use_processed_images, false);
-    
-else
-    fprintf('other'); % remove later
-    disp(config.use_processed_images); % remove later
-    path_table = path_to_table(config, config.use_processed_images, false);
-    path_table_nii = [];
-   
+% Before calling path_to_table
+if ~isstruct(config)
+    error('Config must be a structure. Got %s instead.', class(config));
 end
+if ~isequal(step,'register')
+    %% Read image filename information
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Generate table containing image information
+    if isfield(config,'mri_directory') && ~isempty(config.mri_directory)
+        [path_table, path_table_nii] = path_to_table(config, config.use_processed_images, false);
+        
+    else
+        path_table = path_to_table(config, config.use_processed_images, false);
+        path_table_nii = [];
+    
+    end
 
-% If markers ignored, add these from raw
-if ~isempty(path_table)
-    if ~all(ismember(config.markers,unique(path_table.markers)))
-        idx = find(~ismember(config.markers,unique(path_table.markers)));
+    % If markers ignored, add these from raw
+    if ~isempty(path_table)
+        if ~all(ismember(config.markers,unique(path_table.markers)))
+            idx = find(~ismember(config.markers,unique(path_table.markers)));
 
-        for i = 1:length(idx)
-            config2 = config;
-            config2.img_directory = config.img_directory(idx);
-            config2.markers = config.markers(idx(i));
-            config2.channel_num = config.channel_num(idx(i));
-            try 
-                path_table = vertcat(path_table,path_to_table(config2,'raw',false));
-                path_table.channel_num = arrayfun(@(s) find(s == config.markers),path_table.markers);
-            catch
-                warning("Could not load marker %s ignored from processing.",config.markers(idx(i)));
+            for i = 1:length(idx)
+                config2 = config;
+                config2.img_directory = config.img_directory(idx);
+                config2.markers = config.markers(idx(i));
+                config2.channel_num = config.channel_num(idx(i));
+                try 
+                    path_table = vertcat(path_table,path_to_table(config2,'raw',false));
+                    path_table.channel_num = arrayfun(@(s) find(s == config.markers),path_table.markers);
+                catch
+                    warning("Could not load marker %s ignored from processing.",config.markers(idx(i)));
+                end
             end
+            clear config2
         end
-        clear config2
+    end
+
+    % Count number of x,y tiles for each channel
+    ntiles = length(unique([path_table.x,path_table.y]));
+    if ntiles ~= 1
+        warning("Check if use_processed_images field needs to be updated to stitched directory")
+        assert(ntiles == 1, "To perform analysis, there should be only 1 tile for "+...
+            "each channel in the image dataset.")
     end
 end
-
-% Count number of x,y tiles for each channel
-ntiles = length(unique([path_table.x,path_table.y]));
-if ntiles ~= 1
-    warning("Check if use_processed_images field needs to be updated to stitched directory")
-    assert(ntiles == 1, "To perform analysis, there should be only 1 tile for "+...
-        "each channel in the image dataset.")
-end
-
 %% Intialize results structure if not present
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 res_name = fullfile(config.output_directory,strcat(config.sample_id,'_results.mat'));
@@ -109,7 +110,7 @@ if ~isfile(res_name)
     results.sample_data.orientation = config.orientation;
     save(res_name,'-struct','results')
 end
-
+path_table_nii = []; % initialize path_table_nii because skipping the code above
 %% Run single step and return if specified
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Note no specific checks on tiles/markers included
