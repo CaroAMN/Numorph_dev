@@ -7,8 +7,6 @@ function numorph_preprocessing(varargin)
     % Get the values of the parameters
     input_dir = params.input_dir;
     output_dir = params.output_dir;
-    disp("Output directory:");
-    disp(output_dir);
     parameter_file = params.parameter_file;
     sample_name = params.sample_name;
     stage = params.stage;
@@ -22,44 +20,26 @@ function numorph_preprocessing(varargin)
     % convert config file to a structure like in original numorph
     home_path = fileparts(which('NM_config'));
     
+
     % check if not NM_variables exist 
-    if ~exist(fullfile(home_path,'data','tmp', 'NM_variables.mat'), 'file') || isempty(params.NM_variables)
+    if isempty(params.NM_variables)
         tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
-        disp("hi, i will now read the csv file");
+        disp("config structure from csv file");
         csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
         NM_variables = load(tmp_folder);
     else
-        disp("i got the NM_variables.mat file");
+        disp("config structure from NM_variables.mat file");
         NM_variables = load(params.NM_variables);
         tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
 
     end
-    %disp("i got the NM_variables.mat file");
+    
 
     
 
-
-    %NM_variables = load(tmp_folder);
-    % Debugging information
-    %disp('Loaded NM_variables:');
-    %disp(NM_variables);
-
-    if isfield(NM_variables, 'use_processed_images')
-        disp('Size of use_processed_images before assignment:');
-        disp(size(NM_variables.use_processed_images));
-    else
-        disp('Field use_processed_images does not exist in NM_variables.');
-    end
-
-    
     NM_variables.use_processed_images = "false";
     NM_variables.output_directory = output_dir;
-    disp('output_dir:');
-    disp(output_dir);
-
-    %disp('Size of use_processed_images after assignment:');
-    %disp(size(NM_variables.use_processed_images));
-
+    
     save(tmp_folder, '-struct', 'NM_variables');
 
 
@@ -71,13 +51,6 @@ function numorph_preprocessing(varargin)
         case 'intensity'
             config = NM_config('process', sample_name);
             NM_process(config, "intensity");
-            
-            % get files that match adj_params.mat and thresholds.json
-            %adj_params_file = fullfile(output_dir, 'variables', 'adj_params.mat');
-            %thresholds_file = fullfile(output_dir, 'variables', 'thresholds.json');
-            % convert adj_params.mat to adj_params.json
-            %convertMatFile(adj_params_file);
-            %convertMatFile(thresholds_file);
 
         case 'align'
             config = NM_config('process', sample_name);
@@ -93,7 +66,8 @@ function numorph_preprocessing(varargin)
     end
 
     varData = load(tmp_folder);
-    save(fullfile(output_dir, 'NM_variables.mat'), 'varData');
+    
+    save(fullfile(output_dir, 'NM_variables.mat'), '-struct' ,'varData');
     close all;
     clear varData;
 
