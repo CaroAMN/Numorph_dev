@@ -8,12 +8,12 @@ function numorph_analyze(varargin)
     input_dir = params.input_dir;
     output_dir = params.output_dir;
     parameter_file = params.parameter_file;
-    sample_name = params.sample_name;
+    sample_id = params.sample_name;
     stage = params.stage;
 
 
     % Run the analyze pipeline
-    addpath(genpath(pwd));
+    %addpath(genpath(pwd));
     NM_setup 
 
     % read in the config file which is a csv file
@@ -25,7 +25,7 @@ function numorph_analyze(varargin)
     if isempty(params.NM_variables)
         tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
         disp("config structure from csv file");
-        csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
+        csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir, sample_id);
         NM_variables = load(tmp_folder);
     else
         disp("config structure from NM_variables.mat file");
@@ -34,8 +34,21 @@ function numorph_analyze(varargin)
         save(tmp_folder, '-struct', 'NM_variables');
 
     end
-
-    if isempty(params.use_processed_images)
+    
+    if isequal(stage, 'resample')
+        disp("yes");
+        NM_variables.use_processed_images = "aligned";
+        %path_table = load("/mnt/ssd/numorph_testdata_s/old_results/compiled_R2023a/output_comp_test_TEST1_align_R2023a/variables/path_table.mat");
+        %isempty(path_table)
+        quick_load = true;
+        %[~, last , ~] = fileparts(input_dir);
+        %disp(last);
+        %if isequal(last, 'alignment')
+          %  NM_variables.use_processed_images = "alignment";
+        %else
+        %    NM_variables.use_processed_images = last;
+        %end    
+    elseif isempty(params.use_processed_images)
         NM_variables.use_processed_images = "false";
     else
         NM_variables.use_processed_images = params.use_processed_images;
@@ -49,11 +62,11 @@ function numorph_analyze(varargin)
 
     switch stage
         case 'resample'
-            config = NM_config('analyze', sample_name);
+            config = NM_config('analyze', sample_id);
             NM_analyze(config, 'resample');
 
         case 'register'
-            config = NM_config('analyze', sample_name);
+            config = NM_config('analyze', sample_id);
             NM_analyze(config, 'register');
             
         %case 'count' --> maybe add later
@@ -65,7 +78,7 @@ function numorph_analyze(varargin)
             %NM_analyze(config, 'classify');
 
         otherwise
-            error('Invalid step. Please choose from: process, intensity, align, stitch');
+            error('Invalid step. Please choose from: resample, register');
     end
 
     varData = load(tmp_folder);
@@ -187,7 +200,7 @@ end
 
 
 
-function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
+function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir, sample_id)
     % Read the CSV file into a table
     tbl = readtable(csvFilePath, 'ReadVariableNames', true, 'Delimiter', ',');
 
@@ -195,6 +208,7 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
     S = struct();
     S.img_directory = string(input_dir);
     S.output_directory = string(output_dir);
+    S.sample_id = string(sample_id);
 
     % Iterate over the rows of the table and add to the structure
     for i = 1:height(tbl)
@@ -449,8 +463,8 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
         elseif (parameter == "sample")
             S.sample = string(value);
 
-        elseif (parameter == "sample_id")
-            S.sample_id = string(value);
+        %elseif (parameter == "sample_id")
+        %    S.sample_id = string(value);
 
         % [0,1]; Fraction of images to read and sample from. Setting to 1 means use all images    
         elseif (parameter == "sampling_frequency")

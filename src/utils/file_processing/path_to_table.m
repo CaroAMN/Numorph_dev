@@ -10,7 +10,7 @@ function [path_table_series, path_table_nii] = path_to_table(config,location,qui
 
 % Check file location if not provided
 if nargin<2
-    %disp("nargin<2"); %TODO remove
+    disp("nargin<2"); %TODO remove
     if isstring(config) || ischar(config)
         % Directory location and not config structure
         fprintf("%s\t Reading image filename from single folder using default settings \n",datetime('now'))
@@ -57,31 +57,37 @@ end
 
 % Quick load from saved path_table variable
 if nargin<3
-    %disp("nargin<3");  %TODO remove
+    disp("nargin<3");  %TODO remove
     quick_load = true;
 end
 
 % Overwrite saved path_table variable
 if nargin<4
-    %disp("nargin<4");  %TODO remove
+    disp("nargin<4");  %TODO remove
     save_table = false;
 end
 
 % Load table if variable exists
 location = char(location);
+% eigentlich empty path table init. aber ich muss was ausprobieren 
 path_table = [];
+%path_table = load("/mnt/ssd/numorph_testdata_s/numorph_preprocess/variables/path_table.mat");
+%quick_load = true;
 
 % For sshfs: if base directory specified, do not quick load from saved
 % image paths. Ideally this would be updated to automatically use the base
 % directory
 if isstruct(config) && isfield(config,'base_directory') &&... 
 ~isempty(config.base_directory) && isfolder(config.base_directory)
+    disp("erstes if ");  %TODO remove
     quick_load = false;
     save_table = false;
 elseif isstruct(config) && isfile(fullfile(config.output_directory,'variables','path_table.mat'))
+    disp("zweites if ");  %TODO remove
     var_location = fullfile(config.output_directory,'variables','path_table.mat');  
     load(var_location,'path_table')
     if ~isequal(location,"raw") && ~isfield(path_table,location) 
+        disp("drittes if ");  %TODO remove
         quick_load = false;
         save_table = true;
     end
@@ -92,16 +98,19 @@ end
 % caro workaround
 
 is_dir = contains(location, '/');
-
+disp("isdir");
+disp(is_dir);
 if is_dir
     if contains(location, 'stitched')
         location = 'stitched';
-    elseif contains(location, 'aligned')
+    elseif contains(location, 'alignment')
         location = 'aligned';
     elseif contains(location, 'resampled')
         location = 'resampled';
     end
 end
+disp("location");
+disp(location);
 
 % Munge paths or read filename information from previously saved variable
 switch location
@@ -139,6 +148,9 @@ switch location
         if ~isempty(path_table) && quick_load
             fprintf("%s\t Quick loading from table \n",datetime('now'))
             path_table_series = path_table.aligned;
+            disp("path_table_series from aligend");
+            disp(path_table_series);
+
             return            
         end
         path_table_series = munge_aligned(config);

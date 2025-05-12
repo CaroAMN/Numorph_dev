@@ -52,6 +52,7 @@ fprintf("%s\t Working on sample %s \n",datetime('now'),config.sample_id)
 if ~isstruct(config)
     error('Config must be a structure. Got %s instead.', class(config));
 end
+
 if ~isequal(step,'register')
     %% Read image filename information
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

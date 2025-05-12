@@ -8,7 +8,7 @@ function numorph_preprocessing(varargin)
     input_dir = params.input_dir;
     output_dir = params.output_dir;
     parameter_file = params.parameter_file;
-    sample_name = params.sample_name;
+    sample_id = params.sample_name;
     stage = params.stage;
 
 
@@ -25,7 +25,7 @@ function numorph_preprocessing(varargin)
     if isempty(params.NM_variables)
         tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
         disp("config structure from csv file");
-        csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir);
+        csv_to_mat_file(parameter_file, tmp_folder, input_dir, output_dir, sample_id);
         NM_variables = load(tmp_folder);
     else
         disp("config structure from NM_variables.mat file");
@@ -45,19 +45,19 @@ function numorph_preprocessing(varargin)
 
     switch stage
         case 'process'
-            config = NM_config('process', sample_name);
+            config = NM_config('process', sample_id);
             NM_process(config, "process");
 
         case 'intensity'
-            config = NM_config('process', sample_name);
+            config = NM_config('process', sample_id);
             NM_process(config, "intensity");
 
         case 'align'
-            config = NM_config('process', sample_name);
+            config = NM_config('process', sample_id);
             NM_process(config, "align");
 
         case 'stitch'
-            config = NM_config('process', sample_name);
+            config = NM_config('process', sample_id);
             NM_process(config, "stitch");
 
        
@@ -188,7 +188,7 @@ end
 
 
 
-function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
+function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir, sample_id)
     % Read the CSV file into a table
     tbl = readtable(csvFilePath, 'ReadVariableNames', true, 'Delimiter', ',');
 
@@ -196,6 +196,7 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
     S = struct();
     S.img_directory = string(input_dir);
     S.output_directory = string(output_dir);
+    S.sample_id = string(sample_id)
 
     % Iterate over the rows of the table and add to the structure
     for i = 1:height(tbl)
@@ -450,8 +451,8 @@ function csv_to_mat_file(csvFilePath, matFilePath, input_dir, output_dir)
         elseif (parameter == "sample")
             S.sample = string(value);
 
-        elseif (parameter == "sample_id")
-            S.sample_id = string(value);
+        %elseif (parameter == "sample_id")
+        %    S.sample_id = string(value);
 
         % [0,1]; Fraction of images to read and sample from. Setting to 1 means use all images    
         elseif (parameter == "sampling_frequency")
