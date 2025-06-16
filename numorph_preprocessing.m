@@ -11,17 +11,11 @@ function numorph_preprocessing(varargin)
     sample_id = params.sample_name;
     stage = params.stage;
 
-    %
-    % ADD SYMLINK RESOLUTION HERE - RIGHT AFTER PARSING
     % Resolve symlinks to get actual paths
     input_dir = resolve_symlinks(input_dir);
     output_dir = resolve_symlinks(output_dir);
     parameter_file = resolve_symlinks(parameter_file);
-    
-    % Optional: Add debug output
-    fprintf('Resolved input_dir: %s\n', input_dir);
-    fprintf('Resolved output_dir: %s\n', output_dir);
-    fprintf('Resolved parameter_file: %s\n', parameter_file);
+
 
     % Run the preprocessing pipeline
     %addpath(genpath(pwd));
