@@ -11,6 +11,11 @@ function numorph_preprocessing(varargin)
     sample_id = params.sample_name;
     stage = params.stage;
 
+    % Resolve symlinks to get actual paths
+    input_dir = resolve_symlinks(input_dir);
+    output_dir = resolve_symlinks(output_dir);
+    parameter_file = resolve_symlinks(parameter_file);
+
 
     % Run the preprocessing pipeline
     %addpath(genpath(pwd));
@@ -962,3 +967,36 @@ function params = parseInputArgs(varargin)
     end
 
 end
+
+% function to resolve symlinks 
+function resolved_path = resolve_symlinks(input_path)
+    % Resolve symlinks to get actual file/directory paths
+    resolved_path = input_path; % Default fallback
+    try
+        if isunix
+            % Check if path exists first
+            if exist(input_path, 'file') || exist(input_path, 'dir')
+                % Use realpath command (more robust than readlink)
+                [status, result] = system(['realpath "' input_path '"']);
+                if status == 0
+                    resolved_path = strtrim(result);
+                    fprintf('Symlink resolved: %s -> %s\n', input_path, resolved_path);
+                end
+            end
+        else
+            % On Windows, use the full path directly
+            try
+                resolved_path = char(java.io.File(input_path).getCanonicalPath());
+            catch
+                % Fall back to original path if Java method fails
+                resolved_path = input_path;
+            end
+        end
+    catch
+        % If all else fails, use the original path
+        resolved_path = input_path;
+        warning('Could not resolve symlink for: %s', input_path);
+    end
+end
+     
+    
