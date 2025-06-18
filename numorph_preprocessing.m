@@ -11,11 +11,6 @@ function numorph_preprocessing(varargin)
     sample_id = params.sample_name;
     stage = params.stage;
 
-    % Resolve symlinks to get actual paths
-    input_dir = resolve_symlinks(input_dir);
-    output_dir = resolve_symlinks(output_dir);
-    parameter_file = resolve_symlinks(parameter_file);
-
 
     % Run the preprocessing pipeline
     %addpath(genpath(pwd));
@@ -38,12 +33,7 @@ function numorph_preprocessing(varargin)
         tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
 
     end
-    
 
-    
-
-    NM_variables.use_processed_images = "false";
-    NM_variables.output_directory = output_dir;
     
     save(tmp_folder, '-struct', 'NM_variables');
 
@@ -59,10 +49,14 @@ function numorph_preprocessing(varargin)
 
         case 'align'
             config = NM_config('process', sample_id);
+            % need this because of nextflows changing work dirs 
+            % need to update it for the subsequent processes (not the first one)
+            config.output_directory = output_dir;
             NM_process(config, "align");
 
         case 'stitch'
             config = NM_config('process', sample_id);
+            config.output_directory = output_dir;
             NM_process(config, "stitch");
 
        
@@ -968,35 +962,5 @@ function params = parseInputArgs(varargin)
 
 end
 
-% function to resolve symlinks 
-function resolved_path = resolve_symlinks(input_path)
-    % Resolve symlinks to get actual file/directory paths
-    resolved_path = input_path; % Default fallback
-    try
-        if isunix
-            % Check if path exists first
-            if exist(input_path, 'file') || exist(input_path, 'dir')
-                % Use realpath command (more robust than readlink)
-                [status, result] = system(['realpath "' input_path '"']);
-                if status == 0
-                    resolved_path = strtrim(result);
-                    fprintf('Symlink resolved: %s -> %s\n', input_path, resolved_path);
-                end
-            end
-        else
-            % On Windows, use the full path directly
-            try
-                resolved_path = char(java.io.File(input_path).getCanonicalPath());
-            catch
-                % Fall back to original path if Java method fails
-                resolved_path = input_path;
-            end
-        end
-    catch
-        % If all else fails, use the original path
-        resolved_path = input_path;
-        warning('Could not resolve symlink for: %s', input_path);
-    end
-end
      
     
