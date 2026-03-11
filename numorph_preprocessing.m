@@ -11,11 +11,6 @@ function numorph_preprocessing(varargin)
     sample_id = params.sample_name;
     stage = params.stage;
 
-    % Resolve symlinks to get actual paths
-    input_dir = resolve_symlinks(input_dir);
-    output_dir = resolve_symlinks(output_dir);
-    parameter_file = resolve_symlinks(parameter_file);
-
 
     % Run the preprocessing pipeline
     %addpath(genpath(pwd));
@@ -38,12 +33,7 @@ function numorph_preprocessing(varargin)
         tmp_folder = fullfile(home_path,'data','tmp', 'NM_variables.mat');
 
     end
-    
 
-    
-
-    NM_variables.use_processed_images = "false";
-    NM_variables.output_directory = output_dir;
     
     save(tmp_folder, '-struct', 'NM_variables');
 
@@ -59,10 +49,14 @@ function numorph_preprocessing(varargin)
 
         case 'align'
             config = NM_config('process', sample_id);
+            % need this because of nextflows changing work dirs 
+            % need to update it for the subsequent processes (not the first one)
+            config.output_directory = output_dir;
             NM_process(config, "align");
 
         case 'stitch'
             config = NM_config('process', sample_id);
+            config.output_directory = output_dir;
             NM_process(config, "stitch");
 
        
@@ -76,119 +70,6 @@ function numorph_preprocessing(varargin)
     close all;
     clear varData;
 
-    
-
-
-
-    %matFilePaths = getAllMatFiles(output_dir);
-    %
-    %% Loop through each .mat file
-    %for i = 1:length(matFilePaths)
-    %    % Construct the full path to the .mat file
-    %    matFilePath = matFilePaths{i};
-    %    % disp(matFilePath);
-    %
-    %    % Load the .mat file
-    %    loadedData = load(matFilePath);
-    %
-    %    % Assuming the .mat file contains a single variable or a structure.
-    %    % You might need to adjust this part if your .mat files are different.
-    %    dataFieldNames = fieldnames(loadedData);
-    %    if length(dataFieldNames) == 1
-    %        data = loadedData.(dataFieldNames{1});
-    %    
-    %        % Check if the data is a table, if not, you might need to convert or handle differently
-    %        if istable(data)
-    %            % Construct the path for the .csv file
-    %            % It uses the same base filename as the .mat file
-    %            [filePath, fileName, ~] = fileparts(matFilePath);
-    %            csvFilePath = fullfile(filePath, [fileName, '.csv']);
-    %        
-    %            % Write the table to a .csv file
-    %            writetable(data, csvFilePath);
-    %            fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.csv']);
-    %        elseif isstruct(data)
-    %            % Convert structure to JSON string
-    %            jsonStr = jsonencode(data);
-    %            % Construct the path for the output JSON file
-    %            [filePath, fileName, ~] = fileparts(matFilePath);
-    %            jsonFilePath = fullfile(filePath, [fileName, '.json']);
-    %            
-    %            fid = fopen(jsonFilePath, 'w');
-    %            if fid == -1
-    %                error('Cannot create JSON file');
-    %            end
-    %            fwrite(fid, jsonStr, 'char');
-    %            fclose(fid);
-    %            fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
-    %        else
-    %            % Convert structure to JSON string
-    %            jsonStr = jsonencode(data);
-    %            % Construct the path for the output JSON file
-    %            [filePath, fileName, ~] = fileparts(matFilePath);
-    %            jsonFilePath = fullfile(filePath, [fileName, '.json']);
-    %            
-    %            fid = fopen(jsonFilePath, 'w');
-    %            if fid == -1
-    %                error('Cannot create JSON file');
-    %            end
-    %            fwrite(fid, jsonStr, 'char');
-    %            fclose(fid);
-    %            fprintf('Converted %s to %s\n', matFilePaths{i}, [fileName, '.json']);
-    %        end
-    %    % Assuming the the .mat file contains a structure with multiple fields    
-    %    elseif length(dataFieldNames) >= 1
-    %        % Loop through each field if you have multiple fields in your structure
-    %        allData = struct();
-    %        for idx = 1:length(dataFieldNames)
-    %            fieldName = dataFieldNames{idx};
-    %            allData.(fieldName) = loadedData.(fieldName);
-    %        end
-    %        % Convert the structure to a JSON string
-    %        jsonData = jsonencode(allData);
-    %        
-    %        % Define the JSON file path
-    %        [filePath, fileName, ~] = fileparts(matFilePath);
-    %        jsonFilePath = fullfile(filePath, [fileName, '.json']);
-    %        % Write the JSON string to a file
-    %        fileId = fopen(jsonFilePath, 'w');
-    %        if fileId == -1
-    %            error('Failed to create JSON file: %s', jsonFilePath);
-    %        end
-    %        fwrite(fileId, jsonData, 'char');
-    %        fclose(fileId);
-    %        disp(['Data converted and saved to JSON: ', jsonFilePath]);
-    %    else
-    %        warning('%s contains no variables and was not converted.', matFilePaths{i});
-    %    end
-    %end
-    %
-    %% convert the NM_variables.mat file to json
-    %% load the NM_variables.mat file
-    %varData = load(tmp_folder);
-    %%save the NM_variables.mat file also as .mat file in output dir 
-    %save(fullfile(output_dir, 'NM_variables.mat'), 'varData');
-    %% convert the structure to json
-    %jsonStr = jsonencode(varData);
-    %% construct the path for the output JSON file
-    %jsonFilePath = fullfile(output_dir, 'NM_variables.json');
-    %% write the JSON string to a file
-    %fid = fopen(jsonFilePath, 'w');
-    %if fid == -1
-    %    error('Cannot create JSON file');
-    %end
-    %fwrite(fid, jsonStr, 'char');
-    %fclose(fid);
-    %fprintf('Converted %s to %s\n', tmp_folder, 'NM_variables.json');
-    %
-    %close all;  % Close all open figures
-
-    
-    % remove the NM_variables.mat file
-
-    %remove the loaded path_table variable from workspace
-    %clear varData;
-    %do this maybe later and check then if only one stage is selected or something ..
 end
 
 
@@ -968,35 +849,5 @@ function params = parseInputArgs(varargin)
 
 end
 
-% function to resolve symlinks 
-function resolved_path = resolve_symlinks(input_path)
-    % Resolve symlinks to get actual file/directory paths
-    resolved_path = input_path; % Default fallback
-    try
-        if isunix
-            % Check if path exists first
-            if exist(input_path, 'file') || exist(input_path, 'dir')
-                % Use realpath command (more robust than readlink)
-                [status, result] = system(['realpath "' input_path '"']);
-                if status == 0
-                    resolved_path = strtrim(result);
-                    fprintf('Symlink resolved: %s -> %s\n', input_path, resolved_path);
-                end
-            end
-        else
-            % On Windows, use the full path directly
-            try
-                resolved_path = char(java.io.File(input_path).getCanonicalPath());
-            catch
-                % Fall back to original path if Java method fails
-                resolved_path = input_path;
-            end
-        end
-    catch
-        % If all else fails, use the original path
-        resolved_path = input_path;
-        warning('Could not resolve symlink for: %s', input_path);
-    end
-end
      
     
