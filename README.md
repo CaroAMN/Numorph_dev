@@ -1,25 +1,25 @@
-# NuMorph 
+# NuMorph toolkit
 
 ## Description
 
-NuMoprh is a set of image analysis tools for quanityfing nuclei and classifying cell-types in tissue cleared whole brain images.
+NuMoprh is a set of image analysis tools for light-sheet microscopy images of tissue cleared samples.
 
-The toolbox was originally developed by Krupa, O. et al. 
+The toolkit was originally developed by [Krupa, O. et al.](https://www.sciencedirect.com/science/article/pii/S2211124721012626?via%3Dihub)
 
 ## Current development
-The toolbox is currently under development and will be integrated into a nextflow pipeline nf-core/lsmquant which is not released yet. 
+The main processes of the NuMorph-toolkit:
+- intensity correction 
+- channel alignment
+- iterative stitching
+- resampling and ARA registration 
+- cell nuclei quantification
 
-Furthermore the NuMorph toolbox will be available as a MATLAB standalone application along with a Docker, Singularity container.
-
-In addition we plan to distribute the NuMorph toolbox as a PyPi / Conda package. 
+are packaged and used in the [nf-core/lsmquant](https://github.com/nf-core/lsmquant) pipeline for light-sheet image processing.
 
 ## Credits
 The toolbox was originally developed by  Oleh Krupa:
 
 > Krupa, O. et al. NuMorph: Tools for cortical cellular phenotyping in tissue-cleared whole-brain images. Cell Rep 37, 109802 (2021). 
 
-Current maintanace and further development is done by Carolin Schwitalla
+Current maintenance and further development is done by [Carolin Schwitalla](https://github.com/CaroAMN)
 
-
-[here is a link]: https://bitbucket.org/steinlabunc/numorph/downloads/3DNucleiTracingData.zip
-[test data]: https://bitbucket.org/steinlabunc/numorph/downloads/test_images.zip
